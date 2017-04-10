@@ -1,4 +1,6 @@
-###题目介绍
+Homework: Shell
+===
+### 题目介绍
 ---
 
 通过此次作业，将会了解到 Shell 的工作原理，以及类 Linux 系统的新进程到底是如何产生的。
@@ -92,9 +94,11 @@ runcmd(struct cmd *cmd)
 }
 ```
 由此可看出，parsecmd 把命令分成了3个类型，分别是可执行命令，重定向命令，以及管道命令。
-###实现
+
+实现
 ---
-####可执行命令
+#### 可执行命令
+
 在文中找到关键提示：
 >You may want to change the 6.828 shell to always try /bin, if the program doesn't exist in the current working directory, so that below you don't have to type "/bin" for each program. If you are ambitious you can implement support for a PATH variable.
 
@@ -145,7 +149,7 @@ abc: Command not found
 6.828$
 ```
 可以看出，满足了要求的所有功能。
-####输入输出重定向
+#### 输入输出重定向
 首先可能需要看一下配套的 xv6 教材第 10 页的文件系统，至少需要了解文件描述符 (file descriptor) 是什么。
 刚开始写的时候还以为需要自己处理 '<' 和 '>' 情况，后来发现结构体 rcmd 中已经设置好，不需要分开处理。注意一下这个函数：
 ```
@@ -182,7 +186,8 @@ break;
 思路就是先关闭程序原先的标准输入/输出，打开指定文件作为新的标准输入/输出。
 非常容易漏掉权限位，即open的第三个参数。注意这里用的是8进制数，所以一定不能直接写`644`而要写`0644`。
 我还遇到了一个问题，在此记录一下，第一次权限设置不对，导致无法打开生成的文件，更改后运行，还是不行。后来发现其实由于只是 Truncate，没有把之前生成的文件删除新建，所以权限还是第一次有问题的版本。删掉之前的文件，重新运行，结果正常。
-####管道
+#### 管道
+
 本次作业的最难的就是管道。重点还是参考 xv6 教材 13 页管道部分，在 xv6 源码的 Sheet 86 还能找到管道的实现。重点是搞明白 `pipe`，`dup` 两个函数。
 - `int pipe(int p[])`
 作用是建立一个缓冲区，并把缓冲区通过 fd 形式给程序调用。它将 p[0] 修改为缓冲区的读取端， p[1] 修改为缓冲区的写入端。
