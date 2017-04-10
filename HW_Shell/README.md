@@ -1,33 +1,34 @@
 ###题目介绍
 ---
+
 通过此次作业，将会了解到 Shell 的工作原理，以及类 Linux 系统的新进程到底是如何产生的。
 首先自然是看懂 main 函数。
 ```
 int
 main(void)
 {
-static char buf[100];
-int fd, r;
-
-// Read and run input commands.
-while(getcmd(buf, sizeof(buf)) >= 0){
-if(buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' '){
-// 如果只是 cd 命令，则切换文件夹后继续等待命令
-// Clumsy but will have to do for now.
-// Chdir has no effect on the parent if run in the child.
-// 一般写完命令敲回车，这里就是把回车改为'\0'
-buf[strlen(buf)-1] = 0;  // chop \n
-if(chdir(buf+3) < 0)
-fprintf(stderr, "cannot cd %s\n", buf+3);
-continue;
-}
-// 若不是 cd 命令，则fork出子程序尝试运行命令
-if(fork1() == 0)
-runcmd(parsecmd(buf));
-// 等待子进程完成
-wait(&r);
-}
-exit(0);
+    static char buf[100];
+    int fd, r;
+    
+    // Read and run input commands.
+    while(getcmd(buf, sizeof(buf)) >= 0){
+        if(buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' '){
+            // 如果只是 cd 命令，则切换文件夹后继续等待命令
+            // Clumsy but will have to do for now.
+            // Chdir has no effect on the parent if run in the child.
+            // 一般写完命令敲回车，这里就是把回车改为'\0'
+            buf[strlen(buf)-1] = 0;  // chop \n
+            if(chdir(buf+3) < 0)
+            fprintf(stderr, "cannot cd %s\n", buf+3);
+            continue;
+        }
+        // 若不是 cd 命令，则fork出子程序尝试运行命令
+        if(fork1() == 0)
+        runcmd(parsecmd(buf));
+        // 等待子进程完成
+        wait(&r);
+    }
+    exit(0);
 }
 ```
 循环调用 getcmd 函数读入命令：
@@ -35,14 +36,14 @@ exit(0);
 int
 getcmd(char *buf, int nbuf)
 {
-
-if (isatty(fileno(stdin)))  // 判断标准输入是否为终端
-fprintf(stdout, "6.828$ ");  // 是终端则显示提示符
-memset(buf, 0, nbuf);
-fgets(buf, nbuf, stdin);  // 从标准输入读入nbuf个字符到 buf 中
-if(buf[0] == 0) // EOF
-return -1;
-return 0;
+    
+    if (isatty(fileno(stdin)))  // 判断标准输入是否为终端
+    fprintf(stdout, "6.828$ ");  // 是终端则显示提示符
+    memset(buf, 0, nbuf);
+    fgets(buf, nbuf, stdin);  // 从标准输入读入nbuf个字符到 buf 中
+    if(buf[0] == 0) // EOF
+    return -1;
+    return 0;
 }
 ```
 读入命令并确定不是 cd 命令后，执行关键语句
@@ -52,42 +53,42 @@ return 0;
 void
 runcmd(struct cmd *cmd)
 {
-int p[2], r;
-struct execcmd *ecmd;
-struct pipecmd *pcmd;
-struct redircmd *rcmd;
-
-if(cmd == 0)
-exit(0);
-
-switch(cmd->type){
-default:
-fprintf(stderr, "unknown runcmd\n");
-exit(-1);
-
-case ' ':
-ecmd = (struct execcmd*)cmd;
-if(ecmd->argv[0] == 0)
-exit(0);
-fprintf(stderr, "exec not implemented\n");
-// Your code here ...
-break;
-
-case '>':
-case '<':
-rcmd = (struct redircmd*)cmd;
-fprintf(stderr, "redir not implemented\n");
-// Your code here ...
-runcmd(rcmd->cmd);
-break;
-
-case '|':
-pcmd = (struct pipecmd*)cmd;
-fprintf(stderr, "pipe not implemented\n");
-// Your code here ...
-break;
-}    
-exit(0);
+    int p[2], r;
+    struct execcmd *ecmd;
+    struct pipecmd *pcmd;
+    struct redircmd *rcmd;
+    
+    if(cmd == 0)
+    exit(0);
+    
+    switch(cmd->type){
+        default:
+        fprintf(stderr, "unknown runcmd\n");
+        exit(-1);
+        
+        case ' ':
+        ecmd = (struct execcmd*)cmd;
+        if(ecmd->argv[0] == 0)
+        exit(0);
+        fprintf(stderr, "exec not implemented\n");
+        // Your code here ...
+        break;
+        
+        case '>':
+        case '<':
+        rcmd = (struct redircmd*)cmd;
+        fprintf(stderr, "redir not implemented\n");
+        // Your code here ...
+        runcmd(rcmd->cmd);
+        break;
+        
+        case '|':
+        pcmd = (struct pipecmd*)cmd;
+        fprintf(stderr, "pipe not implemented\n");
+        // Your code here ...
+        break;
+    }    
+    exit(0);
 }
 ```
 由此可看出，parsecmd 把命令分成了3个类型，分别是可执行命令，重定向命令，以及管道命令。
@@ -116,32 +117,32 @@ if (ecmd->argv[0] == 0)
 exit(0);
 // fprintf(stderr, "exec not implemented\n");
 if (access(ecmd->argv[0], F_OK) == 0) {
-execv(ecmd->argv[0], ecmd->argv);
+    execv(ecmd->argv[0], ecmd->argv);
 } else {
-const char *binPath = "/bin/";
-int pathLen = strlen(binPath) + strlen(ecmd->argv[0]);
-char *abs_path = (char *)malloc((pathLen+1)*sizeof(char));
-strcpy(abs_path, binPath);
-strcat(abs_path, ecmd->argv[0]);
-if (access(abs_path, F_OK) == 0) {
-execv(abs_path, ecmd->argv);
-} else {
-fprintf(stderr, "%s: Command not found\n", ecmd->argv[0]);
-}
+    const char *binPath = "/bin/";
+    int pathLen = strlen(binPath) + strlen(ecmd->argv[0]);
+    char *abs_path = (char *)malloc((pathLen+1)*sizeof(char));
+    strcpy(abs_path, binPath);
+    strcat(abs_path, ecmd->argv[0]);
+    if (access(abs_path, F_OK) == 0) {
+        execv(abs_path, ecmd->argv);
+    } else {
+        fprintf(stderr, "%s: Command not found\n", ecmd->argv[0]);
+    }
 }
 break;
 ```
 需要补充说明的可能就是 execv 函数，它是 exec 函数族的一个，exec 函数族的作用就是根据 pathname 找到可执行文件，并用它取代调用进程的内容。虽然 pid 未改变，但是实际运行的内容已经不同。结合之前 main 函数中的内容，可以看出 Shell 执行某个命令实际上就是 fork 出一个子进程，然后把子进程替换为想要执行的程序。
 测试结果为：
 ```
-yy@yy-virtual-machine:~/OS/myShell$ ./myShell 
+yy@yy-virtual-machine:~/OS/myShell$ ./myShell
 6.828$ ls
 myShell  sh.c  t.sh
 6.828$ ls ../
 lab  multi-thread  myLogs  MyMemo.txt  myShell	qemu  qemu_mit_2.3  xv6-public
 6.828$ abc
 abc: Command not found
-6.828$ 
+6.828$
 ```
 可以看出，满足了要求的所有功能。
 ####输入输出重定向
@@ -151,16 +152,16 @@ abc: Command not found
 struct cmd*
 redircmd(struct cmd *subcmd, char *file, int type)
 {
-struct redircmd *cmd;
-
-cmd = malloc(sizeof(*cmd));
-memset(cmd, 0, sizeof(*cmd));
-cmd->type = type;
-cmd->cmd = subcmd;
-cmd->file = file;
-cmd->mode = (type == '<') ?  O_RDONLY : O_WRONLY|O_CREAT|O_TRUNC;
-cmd->fd = (type == '<') ? 0 : 1;
-return (struct cmd*)cmd;
+    struct redircmd *cmd;
+    
+    cmd = malloc(sizeof(*cmd));
+    memset(cmd, 0, sizeof(*cmd));
+    cmd->type = type;
+    cmd->cmd = subcmd;
+    cmd->file = file;
+    cmd->mode = (type == '<') ?  O_RDONLY : O_WRONLY|O_CREAT|O_TRUNC;
+    cmd->fd = (type == '<') ? 0 : 1;
+    return (struct cmd*)cmd;
 }
 ```
 看懂之后的工作就很简单了，结果代码为：
@@ -172,8 +173,8 @@ rcmd = (struct redircmd*)cmd;
 // Your code here ...
 close(rcmd->fd);
 if (open(rcmd->file, rcmd->mode, 0644) < 0) {
-fprintf(stderr, "Unable to open file: %s\n", rcmd->file);
-exit(0);
+    fprintf(stderr, "Unable to open file: %s\n", rcmd->file);
+    exit(0);
 }
 runcmd(rcmd->cmd);
 break;
@@ -195,26 +196,26 @@ pcmd = (struct pipecmd*)cmd;
 // Your code here ...
 if (pipe(p) < 0) fprintf(stderr,"pipe failed\n");
 if (fork1() == 0) {
-// 先关闭标准输出再 dup
-// dup 会把标准输出定向到 p[1] 所指文件，即管道写入端
-close(1);
-dup(p[1]);
-// 去掉管道对端口的引用
-close(p[0]);
-close(p[1]);
-// 此时 left 的标准输入不变，标准输出流入管道
-runcmd(pcmd->left);
+    // 先关闭标准输出再 dup
+    // dup 会把标准输出定向到 p[1] 所指文件，即管道写入端
+    close(1);
+    dup(p[1]);
+    // 去掉管道对端口的引用
+    close(p[0]);
+    close(p[1]);
+    // 此时 left 的标准输入不变，标准输出流入管道
+    runcmd(pcmd->left);
 }
 if (fork1() == 0) {
-// 先关闭标准输入再 dup
-// dup 会把标准输入定向到 p[0] 所指文件，即管道读取端
-close(0);
-dup(p[0]);
-// 去掉管道对端口的引用
-close(p[0]);
-close(p[1]);
-// 此时 right 的标准输入从管道读取，标准输出不变
-runcmd(pcmd->right);
+    // 先关闭标准输入再 dup
+    // dup 会把标准输入定向到 p[0] 所指文件，即管道读取端
+    close(0);
+    dup(p[0]);
+    // 去掉管道对端口的引用
+    close(p[0]);
+    close(p[1]);
+    // 此时 right 的标准输入从管道读取，标准输出不变
+    runcmd(pcmd->right);
 }
 close(p[0]);
 close(p[1]);
@@ -230,17 +231,17 @@ pcmd = (struct pipecmd*)cmd;
 // Your code here ...
 if (pipe(p) < 0) fprintf(stderr,"pipe failed\n");
 if (fork1() == 0) {
-close(1);
-dup(p[1]);
-close(p[0]);
-close(p[1]);
-runcmd(pcmd->left);
+    close(1);
+    dup(p[1]);
+    close(p[0]);
+    close(p[1]);
+    runcmd(pcmd->left);
 } else {
-close(0);
-dup(p[0]);
-close(p[0]);
-close(p[1]);
-runcmd(pcmd->right);
+    close(0);
+    dup(p[0]);
+    close(p[0]);
+    close(p[1]);
+    runcmd(pcmd->right);
 }
 break;
 ```
@@ -253,33 +254,34 @@ uniq: Command not found
 ```
 好的 ，又出现了问题。这几个命令都位于 `/usr/bin/`下，而我们在执行中只加入了 `/bin/` 目录，于是我又为`case ' '`添加了一个一劳永逸的实现，方便以后添加新的路径。
 ```
+
 case ' ':
 ecmd = (struct execcmd*)cmd;
 if(ecmd->argv[0] == 0)
 exit(0);
 // fprintf(stderr, "exec not implemented\n");
 if(access(ecmd->argv[0], F_OK) == 0) {
-execv(ecmd->argv[0], ecmd->argv);
+    execv(ecmd->argv[0], ecmd->argv);
 } else {
-// 将路径改为数组实现
-const char *binPath[] = {"/bin/", "/usr/bin/"};
-char *abs_path;
-int bin_count = sizeof(binPath)/sizeof(binPath[0]);
-int found = 0;
-for (int i=0; i<bin_count && found==0; i++) {
-int pathLen = strlen(binPath[i]) + strlen(ecmd->argv[0]);
-abs_path = (char *)malloc((pathLen+1)*sizeof(char));
-strcpy(abs_path, binPath[i]);
-strcat(abs_path, ecmd->argv[0]);
-if(access(abs_path, F_OK) == 0) {
-execv(abs_path, ecmd->argv);
-found = 1;
-}
-free(abs_path);
-}
-if (found == 0) {
-fprintf(stderr, "%s: Command not found\n", ecmd->argv[0]);
-}
+    // 将路径改为数组实现
+    const char *binPath[] = {"/bin/", "/usr/bin/"};
+    char *abs_path;
+    int bin_count = sizeof(binPath)/sizeof(binPath[0]);
+    int found = 0;
+    for (int i=0; i<bin_count && found==0; i++) {
+        int pathLen = strlen(binPath[i]) + strlen(ecmd->argv[0]);
+        abs_path = (char *)malloc((pathLen+1)*sizeof(char));
+        strcpy(abs_path, binPath[i]);
+        strcat(abs_path, ecmd->argv[0]);
+        if(access(abs_path, F_OK) == 0) {
+            execv(abs_path, ecmd->argv);
+            found = 1;
+        }
+        free(abs_path);
+    }
+    if (found == 0) {
+        fprintf(stderr, "%s: Command not found\n", ecmd->argv[0]);
+    }
 }
 
 break;
