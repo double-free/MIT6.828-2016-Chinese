@@ -23,6 +23,7 @@
 ```
 
 - **What is the last instruction of the boot loader executed, and what is the first instruction of the kernel it just loaded?**
+
 通过阅读 main.c 很容易得出 boot loader 最后的行代码是
 ```
 ((void (*)(void)) (ELFHDR->e_entry))();
@@ -48,6 +49,7 @@ kernel 的第一条指令就是下一条指令：
 ```
 
 - **Where is the first instruction of the kernel?**
+
 显然是在内存地址 0x10000c，更多信息可在对应目录下使用 objdump 命令查看
 ```
 ~/OS/lab/obj/kern$ objdump -f kernel
@@ -58,6 +60,7 @@ start address 0x0010000c
 ```
 
 - **How does the boot loader decide how many sectors it must read in order to fetch the entire kernel from disk? Where does it find this information?**
+
 根据对 main.c 的分析，显然是通过 ELF 文件头获取所有 program header table，每个 program header table 记录了三个重要信息用以描述段 (segment)：p_pa (物理内存地址)，p_memsz (所占内存大小)，p_offset (相对文件的偏移地址)。根据这三个信息，对每个段，从 p_offset 开始，读取 p_memsz 个 byte 的内容（需要根据扇区(sector)大小对齐），放入 p_pa 开始的内存中。通过 objdump 命令可以查看： 
 ```
 ~/OS/lab/obj/kern$ objdump -p kernel
@@ -74,6 +77,7 @@ Program Header:
 ### Exercise 5
 ---
 - **Change the link address in boot/Makefrag to something wrong, run make clean, recompile the lab with make, and trace into the boot loader again to see what happens.**
+
 找到 boot/Makefrag 文件中的`-Ttext 0x7c00`部分，这就是boot sector 的 load address 以及 link address，通过在 boot/Makefrag 设置`-Ttext <内存地址>` 告诉链接器。
 现将其设置为`-Ttext 0x7c10`，执行`make clean`，`make`。
 继续将断点设置在 0x7c00，发现执行到以下语句出错：
@@ -152,6 +156,7 @@ Breakpoint 2, 0x00007d6b in ?? ()
 ### Exercise 7
 ---
 - **Use QEMU and GDB to trace into the JOS kernel and stop at the movl %eax, %cr0. Examine memory at 0x00100000 and at 0xf0100000. Now, single step over that instruction using the stepi GDB command. Again, examine memory at 0x00100000 and at 0xf0100000. Make sure you understand what just happened.**
+
 之前的实验中已经发现，kernel 的 load address 和 link address 并不相同。
 实际上，操作系统往往将 kernel 链接和运行在虚拟内存的高位，例如 0xf0100000，以将低位留给用户程序。然而，许多机器并没有那么大的物理内存，所以我们不能直接将 kernel 存储在高位。我们使用处理器的内存管理硬件 (memory management hardware) 来将虚拟内存 0xf0100000 ( kernel 的link address，即运行的地址) 映射到物理内存 0x0010000 ( kernel 的 load address)。这样，既可以保证为用户程序留下足够高的虚拟内存，也可以使 kernel 加载到物理内存 0x100000 处。
 我们先从 kernel 位于 0x10000c 的第一条指令开始，进行单步调试。
@@ -229,6 +234,7 @@ qemu: fatal: Trying to execute code outside RAM or ROM at 0xf010002c
 ### Exercise 8
 ---
 - **We have omitted a small fragment of code - the code necessary to print octal numbers using patterns of the form "%o". Find and fill in this code fragment.**
+
 很早就留意到，每次进入 JOS 的时候，总会输出一行：
 ```
 6828 decimal is XXX octal!
@@ -256,6 +262,7 @@ cprintf("6828 decimal is %o octal!\n", 6828);
 			goto number;
 ```
 - **Explain the interface between printf.c and console.c. Specifically, what function does console.c export? How is this function used by printf.c?**
+
 console.c 暴露接口 cputchar(int c) 提供给 printf.c 中的函数 putch(int ch, int *cnt) 调用。
 - **Explain the following from console.c:**
 ```
@@ -381,6 +388,7 @@ vcprintf (fmt=0xf0101b4e "x %d, y %x, z %d\n", ap=0xf010ff04 "\001")
 | 上一级函数 ebp (旧 ebp)  | ebp     |
 | 第 m 个局部变量      | ebp - 4 * m |
 - **In the call to cprintf(), to what does fmt point? To what does ap point?**
+
 fmt 是 cprintf 函数的第一个参数，即指向字符串`"x %d, y %x, z %d\n"`的指针。从汇编代码中也可以看出，`0xf0101b4e`即该地址。
 ap 指向第二个参数的地址。**注意 ap 中存放的是第二个参数的地址，而非第二个参数。**这里很多教程是错误的，关键在于理解 LEA 和 MOV 的差别。用 gdb 观察可证明我们的想法：
 ```
@@ -393,6 +401,7 @@ $1 = (void *) 0xf010fef8
 ```
 注意到 `ebp + 0xc = 0xf010ff04`，即第二个参数 1 的内存地址，放在了ap中。
 - **List (in order of execution) each call to cons_putc, va_arg, and vcprintf. For cons_putc, list its argument as well. For va_arg, list what ap points to before and after the call. For vcprintf list the values of its two arguments.**
+
 ***cons_putc 函数***
 调用关系为 cprintf -> vcprintf -> vprintfmt -> putch -> cputchar -> cons_putc，设置断点如下：
 ```
@@ -416,9 +425,11 @@ Breakpoint 1 at 0xf0100661: file kern/console.c, line 458.
 | 12 | 32 |' '|
 | 13 | 52 |'4'|
 | 14 | 10 |'\n'|
+
 可以看出使用 ASCII 编码，合起来就输出了：
 ```x 1, y 3, z 4```
 ***va_arg 函数***
+
 函数`type va_arg ( va_list ap, type ); `的作用是解析参数，它的第一个参数是ap，第二个参数是要获取的参数的指定类型，然后返回这个指定类型的值，并且把 ap 的位置指向变参表的下一个变量位置，以下是宏定义。
 ```
 #define _INTSIZEOF(n)   ( (sizeof(n) + sizeof(int) - 1) & ~(sizeof(int) - 1) )
@@ -527,6 +538,7 @@ va_arg 取当前栈地址，并将指针移动到下个“参数”所在位置-
 ---
 - **Determine where the kernel initializes its stack, and exactly where in memory its stack is located. How does the kernel reserve space for its stack? And at which "end" of this reserved area is the stack pointer initialized to point to?**
  - **initialize stack**
+ 
 在 kern/entry.S 中找到初始化 ebp 和 esp 的语句：
 ```
 	# Clear the frame pointer register (EBP)
@@ -555,6 +567,7 @@ relocated () at kern/entry.S:77
 ```
 显然，栈顶为`0xf0110000`。结合下面的栈大小，可以得出栈位于 `0xf0110000` 到 `0xf0108000`。
  - **stack space**
+ 
 在 kern/entry.S 中找到：
 ```
 bootstack:
@@ -573,6 +586,7 @@ bootstack:
 ```
 可以看出，栈大小为 32 kB。
  - **stack pointer**
+ 
 由于栈是从内存高位向低位生长，所以stack pointer应该指向的是高位。
 
 |    寄存器     | 含义          |
@@ -584,6 +598,7 @@ bootstack:
 ### Exercise 10
 ---
 - **Find the address of the test_backtrace function in obj/kern/kernel.asm, set a breakpoint there, and examine what happens each time it gets called after the kernel starts. How many 32-bit words does each recursive nesting level of test_backtrace push on the stack, and what are those words?**
+
 首先阅读 kern/init.c，在 i386_init 函数中找到：
 ```
 	// Test the stack backtrace function (lab 1 only)
@@ -679,8 +694,10 @@ mon_backtrace(int argc, char **argv, struct Trapframe *tf)
  3. 利用数组指针运算来获取 eip 以及 args
 
 - **The return instruction pointer typically points to the instruction after the call instruction (why?)**
+ 
  call的函数执行结束后返回上一级函数继续执行。不用解释了。
 - **Why can't the backtrace code detect how many arguments there actually are? How could this limitation be fixed?**
+
 自己试着描述了下感觉不够清楚，于是参考了这位大牛的答案：
 *https://github.com/clpsz/mit-jos-2014/tree/master/Lab1/Exercise11*
 >因为判断有几个参数这种事情是编译器干的，编译器通过函数原型来判断有几个参数。函数内部是没有方法直接获取到有几个参数传过来了这种事情的。
