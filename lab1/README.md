@@ -4,6 +4,7 @@
 打开终端运行`make qemu-gdb`，再打开另一个终端运行`make gdb`，通过`b *0x07c00`设置断点，`c`继续运行直到断点位置，之后`si`逐步查看。
 
 - **At what point does the processor start executing 32-bit code? What exactly causes the switch from 16- to 32-bit mode?**
+
 ```
 (gdb) 
 [   0:7c2d] => 0x7c2d:	ljmp   $0x8,$0x7c32
@@ -94,6 +95,7 @@ ljmp    $PROT_MODE_CSEG, $protcseg
 ### Exercise 6
 ---
 - **Examine the 8 words of memory at 0x00100000 at the point the BIOS enters the boot loader, and then again at the point the boot loader enters the kernel. Why are they different? What is there at the second breakpoint? (You do not really need to use QEMU to answer this question. Just think.)**
+
 ```
 ~/OS/lab/obj/kern$ objdump -h kernel
 kernel:     file format elf32-i386
@@ -210,7 +212,9 @@ inc/mmu.h 中对 CR0_PE (0位)，CR0_PG (31位)，CR0_WP (16位) 的定义：
 #define CR0_PG		0x80000000	// Paging
 ```
 一旦开启了 CR0_PG，内存引用就变成了通过 virtual memory hardware 转换过的物理地址产生的虚拟地址。例如，虚拟地址 0x00000000 到 0x00400000 以及 0xf0000000 到 0xf0400000 都被转为物理地址 0x00000000 到 0x00400000。高低虚拟地址指向同一个物理地址。
+
 - **What is the first instruction after the new mapping is established that would fail to work properly if the mapping weren't in place? Comment out the movl %eax, %cr0 in kern/entry.S, trace into it, and see if you were right.**
+
 ```
 => 0x10000c:	movw   $0x1234,0x472
 => 0x100015:	mov    $0x110000,%eax
@@ -264,6 +268,7 @@ cprintf("6828 decimal is %o octal!\n", 6828);
 - **Explain the interface between printf.c and console.c. Specifically, what function does console.c export? How is this function used by printf.c?**
 
 console.c 暴露接口 cputchar(int c) 提供给 printf.c 中的函数 putch(int ch, int *cnt) 调用。
+
 - **Explain the following from console.c:**
 ```
 // 一页写满，滚动一行。
@@ -278,14 +283,17 @@ console.c 暴露接口 cputchar(int c) 提供给 printf.c 中的函数 putch(int
 		crt_pos -= CRT_COLS;
 	}
 ```
+
  - **memmove 函数**
+ 
 ```
 memmove(crt_buf, crt_buf + CRT_COLS, (CRT_SIZE - CRT_COLS) * sizeof(uint16_t));
 ```
 `void * memmove(void *dest, const void *src, size_t num);`
 memmove 大部分情况下作用相当于 memcpy，但是加入了缓冲区，当src 和 dest 所指的内存区域重叠时，memmove() 仍然可以正确的处理，不过执行效率上会比使用 memcpy() 略慢些。
 ![memmove 示意图](http://upload-images.jianshu.io/upload_images/4482847-29279770f39edc59.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
- - 参数`int c` **是什么，**`0xff`**和**`0x0700`**又是什么？**
+ - **参数**`int c` **是什么，**`0xff`**和**`0x0700`**又是什么？**
+ 
 `int c`一共32bit，其中高16位用来表示属性，低16位用来表示字符。因此，与`0xff`作 and 运算就是去掉属性，只看字符内容。与`~0xff`作 and 运算就是去掉字符，只看属性。与`0x0700`作 or 运算就是设为默认属性。
 
 - **Trace the execution of the following code step-by-step:**
@@ -387,6 +395,7 @@ vcprintf (fmt=0xf0101b4e "x %d, y %x, z %d\n", ap=0xf010ff04 "\001")
 | 返回地址      | ebp + 4     |
 | 上一级函数 ebp (旧 ebp)  | ebp     |
 | 第 m 个局部变量      | ebp - 4 * m |
+
 - **In the call to cprintf(), to what does fmt point? To what does ap point?**
 
 fmt 是 cprintf 函数的第一个参数，即指向字符串`"x %d, y %x, z %d\n"`的指针。从汇编代码中也可以看出，`0xf0101b4e`即该地址。
@@ -400,9 +409,11 @@ vcprintf (fmt=0xf0101b4e "x %d, y %x, z %d\n", ap=0xf010ff04 "\001")
 $1 = (void *) 0xf010fef8
 ```
 注意到 `ebp + 0xc = 0xf010ff04`，即第二个参数 1 的内存地址，放在了ap中。
+
 - **List (in order of execution) each call to cons_putc, va_arg, and vcprintf. For cons_putc, list its argument as well. For va_arg, list what ap points to before and after the call. For vcprintf list the values of its two arguments.**
 
 ***cons_putc 函数***
+
 调用关系为 cprintf -> vcprintf -> vprintfmt -> putch -> cputchar -> cons_putc，设置断点如下：
 ```
 (gdb) b kern/console.c : 458
@@ -428,6 +439,7 @@ Breakpoint 1 at 0xf0100661: file kern/console.c, line 458.
 
 可以看出使用 ASCII 编码，合起来就输出了：
 ```x 1, y 3, z 4```
+
 ***va_arg 函数***
 
 函数`type va_arg ( va_list ap, type ); `的作用是解析参数，它的第一个参数是ap，第二个参数是要获取的参数的指定类型，然后返回这个指定类型的值，并且把 ap 的位置指向变参表的下一个变量位置，以下是宏定义。
@@ -485,7 +497,9 @@ Breakpoint 1, vprintfmt (putch=0xf01008d2 <putch>, putdat=0xf010fecc,
 ```
 说明 ap 的值是 `0xf010ff0c`，即存放 z=4 的地址。
 如此即可证明，每次调用 va_arg 都会使得 ap 的位置指向变参表的下一个变量位置。
+
 ***vcprintf 函数***
+
 ```
 => 0xf01008e5 <vcprintf>:	push   %ebp
 
@@ -495,11 +509,14 @@ Breakpoint 1, vcprintf (fmt=0xf0101b4e "x %d, y %x, z %d\n",
 两个参数的值在 gdb 中有显示。
 
 - **Run the following code.**
+
 ```
     unsigned int i = 0x00646c72;
     cprintf("H%x Wo%s", 57616, &i);
 ```
+
 **What is the output? Explain how this output is arrived at in the step-by-step manner of the previous exercise.**
+
 输出是`He110 World`。
 57616的16进制形式为 e110，这个很好理解。
 输出字符串时，从给定字符串的第一个字符地址开始，按字节读取字符，直到遇到 '\0' 结束。
@@ -511,7 +528,9 @@ for (; (ch = *p++) != '\0' && (precision < 0 || --precision >= 0); width--)
 					putch(ch, putdat);
 ```
 于是，Wo%s, &i 的意义是把 i 作为字符串输出。查阅 ASCII 码表可知，0x00 对应 '\0'，0x64 对应 'd'，0x6c 对应 'l'，0x72 对应 'r'。
+ 
  - **补充：大端 (big endian) 以及小端 (little endian) 模式**
+ 
 对于整型、长整型等数据类型，Big endian 认为第一个字节是最高位字节（按照从低地址到高地址的顺序存放数据的高位字节到低位字节）；而 Little endian 则相反，它认为第一个字节是最低位字节（按照从低地址到高地址的顺序存放据的低位字节到高位字节）。
 简单理解，就是说小端模式存储的数据按照字符串的读取方法是倒序的。
 一般来说，x86 系列 CPU 都是 little-endian 的字节序，PowerPC 通常是 big-endian，网络字节顺序也是 big-endian还有的CPU 能通过跳线来设置 CPU 工作于 Little endian 还是 Big endian 模式。
@@ -523,7 +542,9 @@ for (; (ch = *p++) != '\0' && (precision < 0 || --precision >= 0); width--)
     unsigned int i = 0x726c6400;
     cprintf("H%x Wo%s", 57616, &i);
 ```
+
 - **In the following code, what is going to be printed after 'y='? (note: the answer is not a specific value.) Why does this happen?**
+
 ```    
 cprintf("x=%d y=%d", 3);
 ```
@@ -532,6 +553,7 @@ cprintf("x=%d y=%d", 3);
 va_arg 取当前栈地址，并将指针移动到下个“参数”所在位置--简单的栈内移动，没有任何标志或者条件能够让你确定可变参函数的参数个数，也不能判断当前栈指针的合法性。
 
 - **Let's say that GCC changed its calling convention so that it pushed arguments on the stack in declaration order, so that the last argument is pushed last. How would you have to change cprintf or its interface so that it would still be possible to pass it a variable number of arguments?**
+
 个人认为需要更改 va_start 以及 va_arg 两个宏的实现。
 
 ### Exercise 9
@@ -550,6 +572,7 @@ va_arg 取当前栈地址，并将指针移动到下个“参数”所在位置-
 	movl	$(bootstacktop),%esp
 ```
  - **stack location**
+ 
 设置断点观察：
 ```
 (gdb) b kern/entry.S : 74
