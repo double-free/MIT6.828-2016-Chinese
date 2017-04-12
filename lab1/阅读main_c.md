@@ -9,10 +9,10 @@ bootloader (boot.S and main.c) 存放在启动盘的第一个 sector
 kernel (必须为 elf 文件)存放在第二个 sector
 - **启动步骤**
 
- - 将BIOS读入内存并执行
- - BIOS将初始化设备，设置好中断，将设备的第一个sector读入内存并跳转。
- - 执行到bootloader时，`boot.S`将开启保护模式，并设置好栈指针使得系统可以执行 C 程序。然后执行`bootmain()`。
- - `main.c`中的`bootmain`会读入 kernel 并且跳转。
+ 1. 将BIOS读入内存并执行
+ 2. BIOS将初始化设备，设置好中断，将设备的第一个sector读入内存并跳转。
+ 3. 执行到bootloader时，`boot.S`将开启保护模式，并设置好栈指针使得系统可以执行 C 程序。然后执行`bootmain()`。
+ 4. `main.c`中的`bootmain`会读入 kernel 并且跳转。
 
 ### 阅读代码
 ---
@@ -49,10 +49,11 @@ struct Proghdr {   // 程序头表
 ```
 
 ![ELF文件结构](http://upload-images.jianshu.io/upload_images/4482847-a5a265b2f69b39ad.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
 首先，ELF文件格式提供了两种视图，分别是链接视图和执行视图。
 链接视图是以节（section）为单位，执行视图是以段（segment）为单位。链接视图就是在链接时用到的视图，而执行视图则是在执行时用到的视图。上图左侧的视角是从链接来看的，右侧的视角是执行来看的。可以看出，一个segment可以包含数个section。
 本文关注执行，结构体Proghdr是用于描述段 (segment) 的 program header，可有多个。
-####**bootmain()函数**
+#### bootmain()函数
 
 ```c
 #include <inc/x86.h>
@@ -137,7 +138,7 @@ bad:
 - `((void (*)(void)) (ELFHDR->e_entry))();`
 将`ELFHDR->e_entry`转为一个无参数，无返回值的函数指针，并执行该函数。
 
-####**读取segment**
+#### 读取segment
 
 *(只从逻辑分析，忽略readsect和waitdisk函数)*
 ```c
@@ -213,7 +214,7 @@ readsect(void *dst, uint32_t offset)
 ```
 uint32_t 512的十六进制表示为`0x00000200`，减1后为`0x000001ff`，按位取反得`0xfffffe00`，可以看出作用是将pa的后9 bit全部置0。
 
-###附录1. main.c生成的汇编代码
+### 附录1. main.c生成的汇编代码
 为了分析exercise 3，有必要对各个函数的汇编码进行一个review。
 
 ```
@@ -341,7 +342,7 @@ uint32_t 512的十六进制表示为`0x00000200`，减1后为`0x000001ff`，按�
 => 0x7d61:	call   0x7cdc
 ... // 重复直到跳出for循环
 ```
-###附录2. ELF详细介绍
+### 附录2. ELF详细介绍
 
 - **ELF executable**
 可看作包含加载信息的文件头 (header) 以及一些程序段 (program section)。每个程序段是相邻的代码块或数据块，需要被加载到内存的特定位置。boot loader 不更改代码或数据，只是加载到内存并且执行。
@@ -349,11 +350,11 @@ uint32_t 512的十六进制表示为`0x00000200`，减1后为`0x000001ff`，按�
 以一个定长 ELF header 开头，然后是变长的 program header，包含了所有需要加载的程序段。
 - **program section**
 只关注三个会用到的section。
- - .text
+ 1. .text
 程序的可执行指令。
- - .rodata 
+ 2. .rodata 
 只读数据。例如 C 编译器产生的 ASCII 字符串常量。
- - .data
+ 3. .data
 保存程序的初始数据。例如某个有初始值的全局变量 `int x = 5;`。
 
 ```
