@@ -1,9 +1,13 @@
 ### Introduction
 ---
 该 lab 主要需要编写操作系统的内存管理部分。内存管理分为两个部分：
+
 1. 内核的物理内存分配器 (physical memory allocator)
+
 使得内核可以分配、释放内存。该分配器以页为单位，JOS 中一页是 4kB。本次 lab 的任务是维护一个数据结构，该数据结构记录了物理内存分配与释放，以及多少个进程正在共享各个已分配的页。
+
 2. 虚拟内存 (virtual memory)
+
 将内核和用户程序使用的虚拟地址映射到物理内存的地址中。x86 的内存管理单元 (MMU) 会在指令用到内存时完成这个映射，查询一系列页表。
 
 在 lab2 中，新加入了几个源文件：
@@ -15,6 +19,7 @@ kern/kclock.h    // 操纵 PC 的时钟以及 CMOS RAM 等设备
 kern/kclock.c    // 这些设备中记录了物理内存大小
 ```
 重点需要阅读 `memlayout.h` 以及 `pmap.h`，还需参考 `inc/mmu.h`。
+
 **处理冲突**
 
 在`git merge lab1`时，几乎必然出现冲突，以 conf/lab.mk 为例：
@@ -46,9 +51,11 @@ page_init()
 page_alloc()
 page_free()
 ```
+
 **check_page_free_list() and check_page_alloc() test your physical page allocator. **
 
 操作系统必需跟踪哪些物理 RAM 是空闲的，哪些正在使用。这个 exercise 主要编写物理页面分配器。它利用一个 PageInfo 结构体组成的链表记录哪些页面空闲，每个结构体对应一个物理页。因为页表的实现需要分配物理内存来存储页表，在虚拟内存的实现之前，我们需要先编写物理页面分配器。
+
 **boot_alloc 函数**
 
 ```
@@ -132,6 +139,7 @@ mem_init 函数中需要添加以下两行：
 	memset(pages, 0, npages * sizeof(struct PageInfo));
 ```
 需要注意的是分配内存用的是 boot_alloc。这是一个仅用于 JOS 设置自身虚拟内存系统时使用的物理内存分配器，仅用于 mem_init 函数。当初始化页面以及空闲内存列表后，不再使用 boot_alloc，而使用 page_alloc。
+
 **page_init 函数**
 
 ```
@@ -211,6 +219,7 @@ _paddr(const char *file, int line, void *kva)
 	return (physaddr_t)kva - KERNBASE;
 }
 ```
+
 **page_alloc 函数**
 
 这个函数主要是完成页面的分配。所谓分配是基于 PageInfo，即管理层面的，并没有真正进行内存的分配。更加恰当的说法是标记为已使用。
@@ -244,6 +253,7 @@ page_alloc(int alloc_flags)
 }
 ```
 基本没什么值得说的，按着提示走，不用手动增加引用计数，调用者会做这个事。page2kva 函数的作用就是通过物理页获取其内核虚拟地址。另外分配后的页面需要将 pp_link 指针设置为 NULL。
+
 **page_free 函数**
 
 释放页面。
@@ -270,7 +280,7 @@ page_free(struct PageInfo *pp)
 完成以上步骤，编译运行，看到 `check_page_alloc() succeeded!
 `则成功。
 
-###Exercise 4
+### Exercise 4
 ---
 - **Exercise 4. In the file kern/pmap.c, you must implement code for the following functions.**
 ```
@@ -283,6 +293,7 @@ page_free(struct PageInfo *pp)
 **check_page(), called from mem_init(), tests your page table management routines. You should make sure it reports success before proceeding.**
 
 这个练习难度就比较高了，首先需要补充一些必需的知识。
+
 **虚拟内存**
 
 当 cpu 拿到一个地址并根据地址访问内存时，在 x86架构下药经过至少两级的地址变换：段式变换和页式变换。分段机制的主要目的是将代码段、数据段以及堆栈段分开，保证互不干扰。分页机制则是为了实现虚拟内存。
@@ -369,6 +380,7 @@ inc/mmu.h 中有许多将会用到的宏以及常量，在 exercise 4 中使用�
 #define PTE_G		0x100	// Global
 ```
 **pgdir_walk 函数**
+
 作用是查找一个虚拟地址对应的页表项地址，需要完成如图的转换，返回对应的页表地址，即红圈圈出的部分的虚拟地址：
 
 ![转换流程](http://upload-images.jianshu.io/upload_images/4482847-1941fd6b845db3b5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
@@ -407,6 +419,7 @@ pgdir_walk(pde_t *pgdir, const void *va, int create)
 }
 ```
 **page_lookup 函数**
+
 根据各个函数的依赖关系，下一个编写 page_lookup 函数。作用是查找虚拟地址对应的物理页描述。
 ```
 struct PageInfo *
@@ -427,7 +440,9 @@ page_lookup(pde_t *pgdir, void *va, pte_t **pte_store)
 }
 ```
 此处再次用到了 PTE_ADDR 这个宏。其作用是将页表指针指向的内容转为物理地址。
+
 **page_remove 函数**
+
 作用是移除一个虚拟地址与对应的物理页的映射。
 ```
 void
@@ -446,6 +461,7 @@ page_remove(pde_t *pgdir, void *va)
 }
 ```
 **page_insert 函数**
+
 作用是建立一个虚拟地址与物理页的映射，与 page_remove 对应。
 ```
 int
@@ -500,7 +516,8 @@ page_insert(pde_t *pgdir, struct PageInfo *pp, void *va, int perm)
 }
 ```
 **boot_map_region 函数**
-作用是映射一片指定虚拟页到指定物理页。思路就是反复利用pgdir_walk。难度不高，注意此时的 va 类型是 uintptr_t，调用 pgdir_walk 时需要转换为 void *。
+
+作用是映射一片指定虚拟页到指定物理页。思路就是反复利用pgdir_walk。难度不高，注意此时的 va 类型是 uintptr_t，调用 pgdir_walk 时需要转换为 void \*。
 ```
 static void
 boot_map_region(pde_t *pgdir, uintptr_t va, size_t size, physaddr_t pa, int perm)
@@ -517,11 +534,11 @@ boot_map_region(pde_t *pgdir, uintptr_t va, size_t size, physaddr_t pa, int perm
 	}
 }
 ```
-完成以上几个函数，编译运行。出现 `check_page() succeeded!
-` 则成功。
-###Exercise 5
+完成以上几个函数，编译运行。出现 `check_page() succeeded!` 则成功。
+### Exercise 5
 ---
 - **Fill in the missing code in mem_init() after the call to check_page().**
+
 JOS 将处理器的 32 位线性地址分为用户环境（低位地址）以及内核环境（高位地址）。分界线在 inc/memlayout.h 中定义为 ULIM：
 ```
 #define	KERNBASE	0xF0000000
@@ -652,7 +669,7 @@ check_page_installed_pgdir() succeeded!
 ```
 检查通过，实验成功。
 
-###Questions
+### Questions
 ---
 - **What entries (rows) in the page directory have been filled in at this point? What addresses do they map and where do they point? In other words, fill out this table as much as possible:**
 
@@ -672,11 +689,14 @@ check_page_installed_pgdir() succeeded!
 | 0 | 0x00000000 | same as 960 |
 
 - **We have placed the kernel and user environment in the same address space. Why will user programs not be able to read or write the kernel's memory? What specific mechanisms protect the kernel memory?**
+
 由于页表可以设置权限位，如果没有将 PTE_U 置 1 则用户无权限读写。
 - **What is the maximum amount of physical memory that this operating system can support? Why?**
+
 注意到，pages 这个数组只能占用最多 4MB 的空间，而每个 PageInfo 占用 8Byte，也就是说最多只能有512k页，每页容量4kB，总共最多 2GB。
 
 - **How much space overhead is there for managing memory, if we actually had the maximum amount of physical memory? How is this overhead broken down?**
+
 "overhead"在这里指的是开支。当我们达到最高物理内存时，显然1 个 page_dir 和 1024 个 page_table 都在工作，page_dir 和 page_table 每个 entry 都是 4 byte，且都有1024个 entry。所以一共 (1024 + 1) * 4kB = 4100 kB，还要加上 pages 数组所占用的 4MB，一共 8196 kB。如果要削减这个开支，可以使每个页的容量变大，例如变为 8kB 。
 
 - **Revisit the page table setup in kern/entry.S and kern/entrypgdir.c. Immediately after we turn on paging, EIP is still a low number (a little over 1MB). At what point do we transition to running at an EIP above KERNBASE? What makes it possible for us to continue executing at a low EIP between when we enable paging and when we begin running at an EIP above KERNBASE? Why is this transition necessary?**
@@ -699,13 +719,15 @@ relocated:
 	# now to C code
 	call	i386_init
 ```
-语句`jmp	*%eax`即转到 eax 所存的地址执行，在这里完成了跳转。relocated 部分代码主要设置了栈指针以及调用 kern/init.c。由于在 kern/entrypgdir.c 中将 0~4MB 和 KERNBASE ~ KERNBASE + 4 MB 的虚拟地址都映射到了 0~4MB 的物理地址上，因此无论 EIP 在高位和低位都能执行。必需这么做是因为如果只映射高位地址，那么在开启分页机制的下一条语句就会crash。
+语句`jmp	*%eax`即转到 eax 所存的地址执行，在这里完成了跳转。relocated 部分代码主要设置了栈指针以及调用 kern/init.c。由于在 kern/entrypgdir.c 中将 0 ~ 4MB 和 KERNBASE ~ KERNBASE + 4 MB 的虚拟地址都映射到了 0 ~ 4MB 的物理地址上，因此无论 EIP 在高位和低位都能执行。必需这么做是因为如果只映射高位地址，那么在开启分页机制的下一条语句就会crash。
 
-###Challenge
+### Challenge
 ---
 这部分有意思的题目还是比较多，选一题来加深下印象，对做 Question 1 也有帮助。
+
 **Extend the JOS kernel monitor with commands to:**
 - **Display in a useful and easy-to-read format all of the physical page mappings (or lack thereof) that apply to a particular range of virtual/linear addresses in the currently active address space. For example, you might enter 'showmappings 0x3000 0x5000' to display the physical page mappings and corresponding permission bits that apply to the pages at virtual addresses 0x3000, 0x4000, and 0x5000.**
+
 在 monitor 中添加命令的方法可参考 lab1 中的 backtrace 。此处还需要在 kern/monitor.h 中定义一下该函数。
 ```
 int
@@ -758,14 +780,22 @@ mon_showmappings(int argc, char **argv, struct Trapframe *tf)
 }
 ```
 主要有四个重要的地方：
+ 
  1. strtol 函数
+
 `long int strtol(const char *nptr,char **endptr,int base);`
 作用是将字符串转为整数，可以通过 base 指定进制，会将第一个非法字符的指针写入 endptr 中。所以相比 atoi 函数，可以检查是否转换成功。
+ 
  2. pgdir_walk 函数的返回情况有几种？
-`if ( !cur_pte || !(*cur_pte & PTE_P))` 非常容易遗漏第二个条件。注意到，pgdir_walk 这个函数返回值可能为NULL，也可能是一个pte_t *，而 pte_t * 分为两种情况，一种是该二级页表项内容还未插入，所以 PTE_P 这个位为0。另一种是已经插入。
+
+`if ( !cur_pte || !(*cur_pte & PTE_P))` 非常容易遗漏第二个条件。注意到，pgdir_walk 这个函数返回值可能为NULL，也可能是一个pte_t \*，而 pte_t \* 分为两种情况，一种是该二级页表项内容还未插入，所以 PTE_P 这个位为0。另一种是已经插入。
+ 
  3. 如何输出 permission
+
 这个就自由发挥了，一共有9个flag，我只选了 lab2 需要用到的3个。
+ 
  4. 如何验证
+
 我选择用 exercise 5 中映射的内存块来验证。例如内核栈：
 ```
 K> showmappings 0xefff0000 0xf0000000
