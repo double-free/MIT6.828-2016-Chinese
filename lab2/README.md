@@ -51,8 +51,7 @@ page_init()
 page_alloc()
 page_free()
 ```
-
-**check_page_free_list() and check_page_alloc() test your physical page allocator. **
+**check_page_free_list() and check_page_alloc() test your physical page allocator.**
 
 操作系统必需跟踪哪些物理 RAM 是空闲的，哪些正在使用。这个 exercise 主要编写物理页面分配器。它利用一个 PageInfo 结构体组成的链表记录哪些页面空闲，每个结构体对应一个物理页。因为页表的实现需要分配物理内存来存储页表，在虚拟内存的实现之前，我们需要先编写物理页面分配器。
 
@@ -569,7 +568,9 @@ boot_map_region(pde_t *pgdir, uintptr_t va, size_t size, physaddr_t pa, int perm
 }
 ```
 该练习中主要映射了三段虚拟地址到物理页上。
+
  1. UPAGES (0xef000000 ~ 0xef400000) 最多4MB
+ 
 这是 JOS 记录物理页面使用情况的数据结构，即 exercise 1 中完成的东西，只有 kernel 能够访问。由于用户空间同样需要访问这个数据结构，我们将用户空间的一块内存映射到存储该数据结构的物理内存上。很自然联想到了 boot_map_region 这个函数。
 ```
 //////////////////////////////////////////////////////////////////////
@@ -584,6 +585,7 @@ boot_map_region(pde_t *pgdir, uintptr_t va, size_t size, physaddr_t pa, int perm
 需要注意的是目前只建立了一个页目录，即 kernel_pgdir，所以第一个参数显然为 kernel_pgdir。第二个参数是虚拟地址，UPAGES 本来就是以虚拟地址形式给出的。第三个参数是映射的内存块大小。第四个参数是映射到的物理地址，直接取 pages 的物理地址即可。权限 PTE_U 表示用户有权限读取。
 
  2. 内核栈 ( 0xefff8000 ~ 0xf0000000) 32kB
+ 
 bootstack 表示的是栈地最低地址，由于栈向低地址生长，实际是栈顶。常数 KSTACKTOP = 0xf0000000，KSTKSIZE = 32kB。在此之下是一块未映射到物理内存的地址，所以如果栈溢出时，只会报错而不会覆盖数据。因此我们只用映射 [KSTACKTOP-KSTKSIZE, KSTACKTOP)  区间内的虚拟地址即可。
 ```
 	//////////////////////////////////////////////////////////////////////
@@ -600,7 +602,9 @@ bootstack 表示的是栈地最低地址，由于栈向低地址生长，实际�
 	boot_map_region(kernel_pgdir, (uintptr_t) (KSTACKTOP-KSTKSIZE), KSTKSIZE, PADDR(bootstack), PTE_W | PTE_P);
 ```
 再次说一下权限问题。这里设置了 PTE_W 开启了写权限，然而并没有开启 PTE_U，于是仅有内核能够读写，用户没有任何权限。
+ 
  3. 内核 ( 0xf0000000 ~ 0xffffffff ) 256MB
+ 
 之前在 lab1 中，通过 kernel/entrypgdir.c 映射了 4MB 的内存地址，这里需要映射全部 0xf0000000 至 0xffffffff 共 256MB 的内存地址。
 ```
 	//////////////////////////////////////////////////////////////////////
