@@ -151,7 +151,7 @@ region_alloc(struct Env *e, void *va, size_t len)
 ```
 **load_icode()**
 
-这是本 exercise 最难的一个函数。作用是将 ELF 二进制文件读入内存，由于 JOS 暂时还没有自己的文件系统，实际就是从 *binary 这个内存地址读取。可以从 boot/main.c 中找到灵感。
+这是本 exercise 最难的一个函数。作用是将 ELF 二进制文件读入内存，由于 JOS 暂时还没有自己的文件系统，实际就是从 \*binary 这个内存地址读取。可以从 boot/main.c 中找到灵感。
 大概需要做的事：
 1. 根据 ELF header 得出 Programm header。
 2.  遍历所有 Programm header，分配好内存，加载类型为 ELF_PROG_LOAD 的段。
@@ -614,7 +614,9 @@ JOS 内核使用 `int` 指令来触发一个处理器中断。特别的，我们
  Add a handler in the kernel for interrupt vector `T_SYSCALL`. You will have to edit `kern/trapentry.S` and `kern/trap.c`'s `trap_init()`. You also need to change `trap_dispatch()` to handle the system call interrupt by calling `syscall()` (defined in `kern/syscall.c`) with the appropriate arguments, and then arranging for the return value to be passed back to the user process in `%eax`. Finally, you need to implement `syscall()` in `kern/syscall.c`. Make sure `syscall()` returns `-E_INVAL` if the system call number is invalid. You should read and understand `lib/syscall.c` (especially the inline assembly routine) in order to confirm your understanding of the system call interface. Handle all the system calls listed in `inc/syscall.h` by invoking the corresponding kernel function for each call.
 
 又是一个比较烧脑的练习，`kern` 中有一套 `syscall.h syscall.c`，`inc`和`lib`中又有一套`syscall.h syscall.c`。需要理清这两者之间的关系。
+
 **inc/syscall.h**
+
 ```
 #ifndef JOS_INC_SYSCALL_H
 #define JOS_INC_SYSCALL_H
@@ -700,6 +702,7 @@ sys_getenvid(void)
 这是系统调用的通用模板，不同的系统调用 (例如sys_cputs,  sys_cgetc) 都会以不同参数调用 syscall 函数。为了了解 syscall 函数到底做了什么，需要看懂其中的内联汇编部分。
 
 **补充知识：GCC内联汇编**
+
 其语法固定为：
 `asm volatile (“asm code”：output：input：changed);`
 ```
@@ -737,6 +740,7 @@ sys_getenvid(void)
 根据表格内容，可以看出该内联汇编作用就是引发一个`int`中断，中断向量为立即数 `T_SYSCALL`，同时，对寄存器进行操作。看懂这，就清楚了，这一部分应该不需要我们改动，因为我们处理的是中断已经产生后的部分。**当然，还有另一种更简单的思路，**`inc/` **目录下的，其实都是操作系统留给用户的接口**，所以才会在里面看到 `stdio.h`，`assert.h` 等文件。那么，要进行系统调用肯定也是先调用 `inc/` 中的那个，具体处理应该是在 `kern/` 中实现。
 
 **kern/trap.c**
+
 首先不要忘记在 trap_init 中设置好入口，并且权限设为3，使得用户进程能够产生这个中断。
 ```
 	SETGATE(idt[T_SYSCALL], 0, GD_KT, handler48, 3);
