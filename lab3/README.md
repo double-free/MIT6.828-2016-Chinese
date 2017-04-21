@@ -4,7 +4,8 @@ lab3 将主要实现能运行被保护的用户模式环境（protected user-mod
 
 ### Part A: 用户环境和异常处理
 ---
->**Exercise 1.** Modify `mem_init()` in `kern/pmap.c` to allocate and map the envs array. This array consists of exactly `NENV` instances of the `Env` structure allocated much like how you allocated the pages array. Also like the pages array, the memory backing envs should also be mapped user read-only at UENVS (defined in `inc/memlayout.h`) so user processes can read from this array.
+>**Exercise 1.** 
+Modify `mem_init()` in `kern/pmap.c` to allocate and map the envs array. This array consists of exactly `NENV` instances of the `Env` structure allocated much like how you allocated the pages array. Also like the pages array, the memory backing envs should also be mapped user read-only at UENVS (defined in `inc/memlayout.h`) so user processes can read from this array.
 
 首先，最大进程个数 NENV(1024) 以及进程描述符 struct Env 的定义可以在 inc/env.h 中找到。同时，我们在 kern/env.h 以及 kern/env.c 中可以找到三个全局变量的定义：
 ```
@@ -34,7 +35,8 @@ static struct Env *env_free_list;	// Free environment list
 	boot_map_region(kern_pgdir, (uintptr_t) UENVS, ROUNDUP(NENV*sizeof(struct Env), PGSIZE), PADDR(envs), PTE_U | PTE_P);
 ```
 check_kern_pgdir() 成功。
->**Exercise 2.** In the file `env.c`, finish coding the following functions:
+>**Exercise 2.** 
+In the file `env.c`, finish coding the following functions:
 `env_init()`
 Initialize all of the Env structures in the `envs` array and add them to the `env_free_list`. Also calls `env_init_percpu`, which configures the segmentation hardware with separate segments for privilege level 0 (kernel) and privilege level 3 (user).
 `env_setup_vm()`
@@ -49,7 +51,9 @@ Allocate an environment with `env_alloc` and call `load_icode` to load an ELF bi
 Start a given environment running in user mode.
 
 看上去挺复杂的一个练习。每个函数逐一说明。
+
 **env_init()**
+
 作用是初始化 envs 这个数组以及 env_free_list。需要注意的主要是链表的顺序，要求第一个被使用是 envs[0]，所以我们从后往前插入（类似于栈，后进先出）。
 ```
 void
@@ -69,6 +73,7 @@ env_init(void)
 }
 ```
 **env_setup_vm()**
+
 新建并初始化进程的页目录，一个页目录占用空间 4kB。需要注意两点：
  1. 进程的页目录与内核的页目录基本相同，仅需修改一下 UVPT，所以可以直接 memcpy。
  2. 需要增加页引用。
@@ -112,6 +117,7 @@ env_setup_vm(struct Env *e)
 }
 ```
 **region_alloc()**
+
 为进程分配内存并完成映射。重点就是想到要利用 lab2 中的 page_alloc() 完成分配内存页， page_insert() 完成虚拟地址到物理页的映射。
 ```
 static void
@@ -144,6 +150,7 @@ region_alloc(struct Env *e, void *va, size_t len)
 }
 ```
 **load_icode()**
+
 这是本 exercise 最难的一个函数。作用是将 ELF 二进制文件读入内存，由于 JOS 暂时还没有自己的文件系统，实际就是从 *binary 这个内存地址读取。可以从 boot/main.c 中找到灵感。
 大概需要做的事：
 1. 根据 ELF header 得出 Programm header。
@@ -189,6 +196,7 @@ load_icode(struct Env *e, uint8_t *binary)
 }
 ```
 **env_create()**
+
 作用是新建一个进程。调用已经写好的 env_alloc() 函数即可，之后更改类型并且利用 load_icode() 读取 ELF。
 ```
 void
@@ -205,6 +213,7 @@ env_create(uint8_t *binary, enum EnvType type)
 }
 ```
 **env_run()**
+
 启动某个进程。注释已经非常详细地说明了怎么做，主要说下 env_pop_tf() 这个函数。该函数的作用是将 struct Trapframe 中存储的寄存器状态 pop 到相应寄存器中。查看之前写的 load_icode() 函数中的 `e->env_tf.tf_eip = elf->e_entry` 这一句，经过 env_pop_tf() 之后，指令寄存器的值即设置到了可执行文件的入口。
 ```
 void
@@ -302,7 +311,8 @@ x86 的所有异常可以用中断向量 0~31 表示，对应 IDT 的第 0~31 �
 #### 建立中断描述符表(IDT)
 通过上文，已经了解到了建立 IDT 以及处理异常所需要的基本信息。头文件 `inc/trap.h` 和 `kern/trap.h` 包含了与中断和异常相关的定义，需要仔细阅读。其中 `kern/trap.h` 包含内核私有定义，而 `inc/trap.h` 包含对内核以及用户进程和库都有用的定义。
 每个异常和中断都应该在 `trapentry.S` 和 `trap_init()` 有自己的处理函数，并在 IDT 中将这些处理函数的地址初始化。每个处理函数都需要在栈上新建一个 `struct Trapframe`（见 `inc/trap.h`)，以其地址为参数调用 `trap()` 函数，然后进行异常处理。
->**Exercise 4.** Edit `trapentry.S` and `trap.c` and implement the features described above. The macros `TRAPHANDLER` and `TRAPHANDLER_NOEC` in `trapentry.S` should help you, as well as the T_* defines in `inc/trap.h`. You will need to add an entry point in `trapentry.S` (using those macros) for each trap defined in `inc/trap.h`, and you'll have to provide `_alltraps` which the TRAPHANDLER macros refer to. You will also need to modify `trap_init()` to initialize the `idt` to point to each of these entry points defined in `trapentry.S`; the `SETGATE` macro will be helpful here.
+>**Exercise 4.** 
+Edit `trapentry.S` and `trap.c` and implement the features described above. The macros `TRAPHANDLER` and `TRAPHANDLER_NOEC` in `trapentry.S` should help you, as well as the T_* defines in `inc/trap.h`. You will need to add an entry point in `trapentry.S` (using those macros) for each trap defined in `inc/trap.h`, and you'll have to provide `_alltraps` which the TRAPHANDLER macros refer to. You will also need to modify `trap_init()` to initialize the `idt` to point to each of these entry points defined in `trapentry.S`; the `SETGATE` macro will be helpful here.
 Your `_alltraps` should:
 1. push values to make the stack look like a struct Trapframe
 2. load `GD_KD` into `%ds` and `%es`
