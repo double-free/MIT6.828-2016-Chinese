@@ -611,7 +611,7 @@ struct Gatedesc {
 #### 系统调用
 用户进程通过系统调用来让内核为他们服务。当用户进程召起一次系统调用，处理器将进入内核态，处理器以及内核合作存储用户进程的状态，内核将执行适当的代码来完成系统调用，最后返回用户进程继续执行。实现细节各个系统有所不同。
 JOS 内核使用 `int` 指令来触发一个处理器中断。特别的，我们使用 `int $0x30` 作为系统调用中断。它并不能由硬件产生，因此使用它不会产生歧义。
-应用程序会把系统调用号 (**与中断向量不是一个东西**) 以及系统调用参数传递给寄存器。这样，内核就不用在用户栈或者指令流里查询这些信息。系统调用号将存放于`%eax`，参数（至多5个）会存放于`%edx`, `%ecx`,` %ebx`, `%edi` 以及 `%esi`，调用结束后，内核将返回值放回到`%eax`。
+应用程序会把系统调用号 (**与中断向量不是一个东西**) 以及系统调用参数传递给寄存器。这样，内核就不用在用户栈或者指令流里查询这些信息。系统调用号将存放于`%eax`，参数（至多5个）会存放于`%edx`, `%ecx`,` %ebx`, `%edi` 以及 `%esi`，调用结束后，内核将返回值放回到`%eax`。之所以用 `%eax` 来传递返回值，是由于系统调用导致了栈的切换。
 
 >**Exercise 7.**
  Add a handler in the kernel for interrupt vector `T_SYSCALL`. You will have to edit `kern/trapentry.S` and `kern/trap.c`'s `trap_init()`. You also need to change `trap_dispatch()` to handle the system call interrupt by calling `syscall()` (defined in `kern/syscall.c`) with the appropriate arguments, and then arranging for the return value to be passed back to the user process in `%eax`. Finally, you need to implement `syscall()` in `kern/syscall.c`. Make sure `syscall()` returns `-E_INVAL` if the system call number is invalid. You should read and understand `lib/syscall.c` (especially the inline assembly routine) in order to confirm your understanding of the system call interface. Handle all the system calls listed in `inc/syscall.h` by invoking the corresponding kernel function for each call.
