@@ -1,10 +1,3 @@
-### 简介
----
-在 lab4 中我们将实现多个同时运行的用户进程之间的抢占式多任务处理。
-在 part A 中，我们需要给 JOS 增加多处理器支持。实现轮询( round-robin, RR )调度，并增加基本的用户程序管理系统调用( 创建和销毁进程，分配和映射内存 )。
-在 part B 中，我们需要实现一个与 Unix 类似的 `fork()`，允许一个用户进程创建自己的拷贝。
-在 part C中，我们会添加对进程间通信 ( IPC ) 的支持，允许不同的用户进程相互通信和同步。还要增加对硬件时钟中断和抢占的支持。
-
 ### Part A: 多处理器支持及协同多任务处理
 ---
 我们首先需要把 JOS 扩展到在多处理器系统中运行。然后实现一些新的 JOS 系统调用来允许用户进程创建新的进程。我们还要实现协同轮询调度，在当前进程不使用 CPU 时允许内核切换到另一个进程。
@@ -107,16 +100,20 @@ boot_aps(void)
 我们需要注意的 per-CPU 状态有：
 
 - Per-CPU 内核栈
+
 因为多 CPU 可能同时陷入内核态，我们需要给每个处理器一个独立的内核栈。`percpu_kstacks[NCPU][KSTKSIZE]` 
 在 Lab2 中，我们将 BSP 的内核栈映射到了 KSTACKTOP 下方。相似地，在 Lab4 中，我们需要把每个 CPU 的内核栈都映射到这个区域，每个栈之间留下一个空页作为缓冲区避免 overflow。CPU 0 ，即 BSP 的栈还是从 `KSTACKTOP` 开始，间隔 `KSTACKGAP` 的距离就是 CPU 1 的栈，以此类推。
 
 - Per-CPU TSS 以及 TSS 描述符
+
 为了指明每个 CPU 的内核栈位置，需要任务状态段 (Task State Segment, TSS)，其功能在 Lab3 中已经详细讲过。
 
 - Per-CPU 当前环境指针
+
 因为每个 CPU 能够同时运行各自的用户进程，我们重新定义了基于`cpus[cpunum()]` 的 `curenv`。
 
 - Per-CPU 系统寄存器
+
 所有的寄存器，包括系统寄存器，都是 CPU 私有的。因此，初始化这些寄存器的指令，例如 `lcr3(), ltr(), lgdt(), lidt()` 等，必须在每个 CPU 都执行一次。
 
 >**Exercise 3.**
@@ -205,8 +202,8 @@ The code in `trap_init_percpu()` (`kern/trap.c`) initializes the TSS and TSS des
 > **Exercise 5.**
 Apply the big kernel lock as described above, by calling `lock_kernel()` and `unlock_kernel()` at the proper locations.
 
-实现比较简单，不用细讲。
-关键要理解两点：
+实现比较简单，不用细讲。关键要理解两点：
+
 - 大内核锁的实现
 ```
 void
@@ -247,7 +244,9 @@ xchg(volatile uint32_t *addr, uint32_t newval)
 }
 ```
 这是一段内联汇编，语法在 Lab3 中已经讲解过。`lock` 确保了操作的原子性，其意义是将 addr 存储的值与 newval 交换，并返回 addr 中原本的值。于是，如果最初 `locked = 0`，即未加锁，就能跳出这个 while循环。否则就会利用 `pause` 命令自旋等待。这就确保了当一个 CPU 获得了 BKL，其他 CPU 如果也要获得就只能自旋等待。
+
 - 为什么要在这几处加大内核锁
+
 为了避免多个 CPU 同时运行内核代码，这基本是废话。从根本上来讲，其设计的初衷就是保证独立性。由于分页机制的存在，内核以及每个用户进程都有自己的独立空间。而多进程并发的时候，如果两个进程同时陷入内核态，就无法保证独立性了。例如内核中有某个全局变量 A，cpu1 让 A=1， 而后 cpu2 却让 A=2，显然会互相影响。最初 Linux 设计者为了使系统尽快支持 SMP，直接在内核入口放了一把大锁，保证其独立性。参见这篇非常好的文章 [大内核锁将何去何从](http://blog.csdn.net/universus/article/details/5623971)
 其流程大致为：
 BPS 启动 AP 前，获取内核锁，所以 AP 会在 mp_main 执行调度之前阻塞，在启动完 AP 后，BPS 执行调度，运行第一个进程，`env_run()` 函数中会释放内核锁，这样一来，其中一个 AP 就可以开始执行调度，运行其他进程。
@@ -272,7 +271,9 @@ Make sure to invoke `sched_yield()` in `mp_main`.
 Modify `kern/init.c` to create three (or more!) environments that all run the program `user/yield.c`.
 
 注意以下几个问题：
+
 - 如何找到目前正在运行的进程在 `envs[]` 中的序号？
+
 在 `kern/env.h` 中，可以找到指向 `struct Env`的指针 `curenv`，表示当前正在运行的进程。但是需要注意，不能直接由 `curenv->env_id`得到其序号。在 `inc/env.h` 中有一个宏可以完成这个转换。
 ```
 // The environment index ENVX(eid) equals the environment's offset in the 'envs[]' array.
