@@ -18,7 +18,6 @@
 为处理自己的页错误，进程需要在 JOS 注册一个 page fault handler entrypoint。进程通过 `sys_env_set_pgfault_upcall` 注册自己的 entrypoint，并在 `Env` 结构体中新增 `env_pgfault_upcall` 来记录该信息。
 
 >**Exercise 8.**
-
 Implement the `sys_env_set_pgfault_upcall` system call. Be sure to enable permission checking when looking up the environment ID of the target environment, since this is a "dangerous" system call.
 
 ##### 进程的正常栈和异常栈
@@ -53,7 +52,6 @@ fault_va            <-- %esp when handler is run
 **以下9，10，11三个练习，建议按照调用顺序来看，即 11（设置handler）->9（切换到异常栈）->10（运行handler，切换回正常栈）。**
 
 >**Exercise 9.**
-
 Implement the code in `page_fault_handler` in `kern/trap.c` required to dispatch page faults to the user-mode handler. Be sure to take appropriate precautions when writing into the exception stack. (What happens if the user environment runs out of space on the exception stack?)
 
 *可参考 Exercise 10 的 `lib/pfentry.S` 中的注释*
@@ -124,8 +122,8 @@ What happens if the user environment runs out of space on the exception stack?
 
 ##### 用户模式页错误入口
 在处理完页错误之后，现在我们需要编写汇编语句实现从异常栈到正常栈的切换。
->**Exercise 10.**
 
+>**Exercise 10.**
 Implement the `_pgfault_upcall` routine in `lib/pfentry.S`. The interesting part is returning to the original point in the user code that caused the page fault. You'll return directly there, without going back through the kernel. The hard part is simultaneously switching stacks and re-loading the EIP.
 
 汇编苦手，写的很艰难，最终还是参考了[别人的答案](http://blog.csdn.net/bysui/article/details/51842817)。
@@ -193,7 +191,6 @@ _pgfault_upcall:
 此后就是恢复各寄存器，最后的 `ret` 指令相当于 `popl %eip`，指令寄存器的值修改为 `utf_eip`，达到了返回的效果。 
 
 >**Exercise 11.**
-
 Finish `set_pgfault_handler()` in `lib/pgfault.c`.
 
 该练习是用户用来指定缺页异常处理方式的函数。代码比较简单，但是需要区分清楚 `handler`，`_pgfault_handler`，`_pgfault_upcall` 三个变量。
@@ -239,10 +236,10 @@ set_pgfault_handler(void (*handler)(struct UTrapframe *utf))
 }
 ```
 若是第一次调用，需要首先分配一个页面作为异常栈，并且将该进程的 upcall 设置为 Exercise 10 中的程序。此后如果需要改变handler，不需要再重复这个工作。
+
 最后直接通过 `make grade` 测试，满足要求。
 
 >**Question**
-
 Why `user/faultalloc` and `user/faultallocbad` behave differently?
 
 两者的 page fault handler 一样，但是一个使用 `cprintf()` 输出，另一个使用 `sys_cput()` 输出。
@@ -294,6 +291,7 @@ cprintf(const char *fmt, ...)
 
 #### 实现 Copy-on-Write Fork
 现在我们已经具备了在用户空间实现 copy-on-write `fork()` 的条件。
+
 如同 `dumbfork()` 一样，`fork()` 也要创建一个新进程，并且在新进程中建立与父进程同样的内存映射。关键的不同点是，`dumbfork()` 拷贝了物理页的内容，而 `fork()` 仅拷贝了映射关系，仅在某个进程需要改写某一页的内容时，才拷贝**这一页**的内容。其基本流程如下：
 1. 父进程使用 `set_pgfault_handler`将 `pgfault()` 设为 page fault handler
 2. 父进程使用 `sys_exofork()` 建立一个子进程
@@ -399,7 +397,8 @@ duppage(envid_t envid, unsigned pn)
 
 **pgfault() 函数**
 
-这是 _pgfault_upcall 中调用的页错误处理函数。在调用之前，父子进程的页错误地址都引用同一页物理内存，该函数作用是分配一个物理页面使得两者独立。
+这是 `_pgfault_upcall` 中调用的页错误处理函数。在调用之前，父子进程的页错误地址都引用同一页物理内存，该函数作用是分配一个物理页面使得两者独立。
+
 首先，它分配一个页面，映射到了交换区 `PFTEMP` 这个虚拟地址，然后通过 `memmove()` 函数将 `addr` 所在页面拷贝至 `PFTEMP`，此时有两个物理页保存了同样的内容。再将 `addr` 也映射到 `PFTEMP` 对应的物理页，最后解除了 `PFTEMP` 的映射，此时就只有 `addr` 指向新分配的物理页了，如此就完成了错误处理。
 
 ```
@@ -442,4 +441,4 @@ pgfault(struct UTrapframe *utf)
 		panic("pgfault: page unmap failed (%e)", r);
 }
 ```
-可以通过 `make run-forktree` 验证结果。
+可以通过 `make run-forktree` 验证结果。至此 Part B 结束。
