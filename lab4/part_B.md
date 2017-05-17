@@ -18,6 +18,7 @@
 为处理自己的页错误，进程需要在 JOS 注册一个 page fault handler entrypoint。进程通过 `sys_env_set_pgfault_upcall` 注册自己的 entrypoint，并在 `Env` 结构体中新增 `env_pgfault_upcall` 来记录该信息。
 
 >**Exercise 8.**
+
 Implement the `sys_env_set_pgfault_upcall` system call. Be sure to enable permission checking when looking up the environment ID of the target environment, since this is a "dangerous" system call.
 
 ##### 进程的正常栈和异常栈
@@ -45,17 +46,21 @@ tf_err (error code)
 fault_va            <-- %esp when handler is run
 ```
 相比 trap 时使用的 `Trapframe`，多了记录错误位置的 `fault_va`，少了段选择器`%cs, %ds, %ss`。这反映了两者最大的不同：是否发生了进程的切换。
+
 如果异常发生时，进程已经在异常栈上运行了，这就说明 page fault handler 本身出现了问题。这时，我们就应该在 `tf->tf_esp` 处分配新的栈，而不是在 `UXSTACKTOP`。首先需要 push 一个空的 32bit word 作为占位符，然后是一个 `UTrapframe` 结构体。
 为检查 `tf->tf_esp` 是否已经在异常栈上了，只要检查它是否在区间 `[UXSTACKTOP-PGSIZE, UXSTACKTOP-1]` 上即可。
 
 **以下9，10，11三个练习，建议按照调用顺序来看，即 11（设置handler）->9（切换到异常栈）->10（运行handler，切换回正常栈）。**
 
 >**Exercise 9.**
+
 Implement the code in `page_fault_handler` in `kern/trap.c` required to dispatch page faults to the user-mode handler. Be sure to take appropriate precautions when writing into the exception stack. (What happens if the user environment runs out of space on the exception stack?)
 
 *可参考 Exercise 10 的 `lib/pfentry.S` 中的注释*
 较有难度的一个练习。首先需要理解用户级别的页错误处理的步骤是：
+
 **进程A(正常栈) -> 内核 -> 进程A(异常栈) -> 进程A(正常栈)**
+
 那么内核的工作就是修改进程 A 的某些寄存器，并初始化异常栈，确保能顺利切换到异常栈运行。需要注意的是，由于修改了eip， `env_run()` 是不会返回的，因此不会继续运行后面销毁进程的代码。
 值得注意的是，如果是嵌套的页错误，为了能实现递归处理，栈留出 32bit 的空位，直接向下生长。
 
@@ -105,6 +110,7 @@ page_fault_handler(struct Trapframe *tf)
 }
 ```
 >**Question**
+
 What happens if the user environment runs out of space on the exception stack?
 
 在 `inc/memlayout.h` 中可以找到：
@@ -119,6 +125,7 @@ What happens if the user environment runs out of space on the exception stack?
 ##### 用户模式页错误入口
 在处理完页错误之后，现在我们需要编写汇编语句实现从异常栈到正常栈的切换。
 >**Exercise 10.**
+
 Implement the `_pgfault_upcall` routine in `lib/pfentry.S`. The interesting part is returning to the original point in the user code that caused the page fault. You'll return directly there, without going back through the kernel. The hard part is simultaneously switching stacks and re-loading the EIP.
 
 汇编苦手，写的很艰难，最终还是参考了[别人的答案](http://blog.csdn.net/bysui/article/details/51842817)。
@@ -186,6 +193,7 @@ _pgfault_upcall:
 此后就是恢复各寄存器，最后的 `ret` 指令相当于 `popl %eip`，指令寄存器的值修改为 `utf_eip`，达到了返回的效果。 
 
 >**Exercise 11.**
+
 Finish `set_pgfault_handler()` in `lib/pgfault.c`.
 
 该练习是用户用来指定缺页异常处理方式的函数。代码比较简单，但是需要区分清楚 `handler`，`_pgfault_handler`，`_pgfault_upcall` 三个变量。
@@ -234,6 +242,7 @@ set_pgfault_handler(void (*handler)(struct UTrapframe *utf))
 最后直接通过 `make grade` 测试，满足要求。
 
 >**Question**
+
 Why `user/faultalloc` and `user/faultallocbad` behave differently?
 
 两者的 page fault handler 一样，但是一个使用 `cprintf()` 输出，另一个使用 `sys_cput()` 输出。
