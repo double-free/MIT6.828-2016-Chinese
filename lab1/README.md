@@ -297,6 +297,7 @@ memmove(crt_buf, crt_buf + CRT_COLS, (CRT_SIZE - CRT_COLS) * sizeof(uint16_t));
 ```
 `void * memmove(void *dest, const void *src, size_t num);`
 memmove 大部分情况下作用相当于 memcpy，但是加入了缓冲区，当src 和 dest 所指的内存区域重叠时，memmove() 仍然可以正确的处理，不过执行效率上会比使用 memcpy() 略慢些。
+
 ![memmove 示意图](http://upload-images.jianshu.io/upload_images/4482847-29279770f39edc59.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
  - **参数**`int c` **是什么，**`0xff`**和**`0x0700`**又是什么？**
  
@@ -766,7 +767,7 @@ K>
 	}
 ```
 在这里主要需要注意的是两个地方：
- 1. 阅读 inc/x86.h，找到 N_SLINE 这个关键 type，对应的行号存储在 n_desc 中。
+ 1. 阅读 inc/stab.h，找到 N_SLINE 这个关键 type，对应的行号存储在 n_desc 中。
  2. 获取行号使用的格式 stabs[lline].n_desc，这个可以参考之前的获取函数地址等内容的代码。
 
  此后是添加命令，在 kern/monitor.c 的第27行：
