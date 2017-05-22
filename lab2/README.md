@@ -57,7 +57,7 @@ page_free()
 
 **boot_alloc 函数**
 
-```
+```c
 static void *
 boot_alloc(uint32_t n)
 {
@@ -111,7 +111,7 @@ Idx Name          Size      VMA       LMA       File off  Algn
 **mem_init 函数**
 
 这里需要用到 PageInfo 这个结构体了，首先在 inc/memlayout.h 中找到其定义：
-```
+```c
 struct PageInfo {
 	// Next page on the free list.
 	struct PageInfo *pp_link;
@@ -141,7 +141,7 @@ mem_init 函数中需要添加以下两行：
 
 **page_init 函数**
 
-```
+```c
 void
 page_init(void)
 {
@@ -184,13 +184,13 @@ page_init(void)
 }
 ```
 需要注意的是，下面代码的作用是把页面设为空闲，并插入链表头：
-```
+```c
 		pages[i].pp_ref = 0;
 		pages[i].pp_link = page_free_list;
 		page_free_list = &pages[i];
 ```
 可以在 inc/memlayout.h 中找到 IO hole 的定义，可回顾lab 1：
-```
+```c
 // At IOPHYSMEM (640K) there is a 384K hole for I/O.  From the kernel,
 // IOPHYSMEM can be addressed at KERNBASE + IOPHYSMEM.  The hole ends
 // at physical address EXTPHYSMEM.
@@ -198,11 +198,11 @@ page_init(void)
 #define EXTPHYSMEM	0x100000
 ```
 第四种情况略有难度，实际需要利用 boot_alloc 函数来找到第一个能分配的页面。相同的思想在已经写好的`check_free_page_list`函数中也可以找到。关键代码：
-```
+```c
 size_t first_free_address = PADDR(boot_alloc(0));
 ```
 尤其需要注意的是，由于 boot_alloc 返回的是内核虚拟地址 (kernel virtual address)，一定要利用  PADDR 转为物理地址。在 kern/pmap.h 中可以找到 PADDR 的定义，实际就是减了一个 F0000000：
-```
+```c
 /* This macro takes a kernel virtual address -- an address that points above
  * KERNBASE, where the machine's maximum 256MB of physical memory is mapped --
  * and returns the corresponding physical address.  It panics if you pass it a
@@ -222,7 +222,7 @@ _paddr(const char *file, int line, void *kva)
 **page_alloc 函数**
 
 这个函数主要是完成页面的分配。所谓分配是基于 PageInfo，即管理层面的，并没有真正进行内存的分配。更加恰当的说法是标记为已使用。
-```
+```c
 //
 // Allocates a physical page.  If (alloc_flags & ALLOC_ZERO), fills the entire
 // returned physical page with '\0' bytes.  Does NOT increment the reference
@@ -256,7 +256,7 @@ page_alloc(int alloc_flags)
 **page_free 函数**
 
 释放页面。
-```
+```c
 //
 // Return a page to the free list.
 // (This function should only be called when pp->pp_ref reaches 0.)
@@ -317,7 +317,7 @@ https://pdos.csail.mit.edu/6.828/2016/lec/x86_translation_and_registers.pdf
 JOS 内核常常需要读取或更改仅知道物理地址的内存。例如，添加一个到页表的映射要求分配物理内存来存储页目录并初始化内存。然而，内核和其他任何程序一样，无法绕过虚拟内存转换这个步骤，因此不能直接使用物理地址。JOS 将从 0x00000000 开始的物理内存映射到 0xf0000000 的其中一个原因就是需要使内核能读写仅知道物理地址的内存。为了把物理地址转为虚拟地址，内核需要给物理地址加上 0xf0000000。这就是 KADDR 函数做的事。
 同样，JOS 内核有时也需要从虚拟地址获得物理地址。内核的全局变量和由 boot_alloc 分配的内存都在内核被加载的区域，即从0xf0000000开始的地方。因此，若需要将虚拟地址转为物理地址，直接减去0xf0000000即可。这就是 PADDR 函数做的事。
 inc/mmu.h 中有许多将会用到的宏以及常量，在 exercise 4 中使用到的已经用中文给出注释，如下：
-```
+```c
 // The PDX, PTX, PGOFF, and PGNUM macros decompose linear addresses as shown.
 // To construct a linear address la from PDX(la), PTX(la), and PGOFF(la),
 // use PGADDR(PDX(la), PTX(la), PGOFF(la)).
@@ -366,7 +366,7 @@ inc/mmu.h 中有许多将会用到的宏以及常量，在 exercise 4 中使用�
 
 ```
 还有一些页表以及页目录会用到的标识位，exercise 4 中用得到的用中文注释：
-```
+```c
 // Page table/directory entry flags.
 #define PTE_P		0x001	// 该项是否存在
 #define PTE_W		0x002	// 可写入
@@ -384,8 +384,8 @@ inc/mmu.h 中有许多将会用到的宏以及常量，在 exercise 4 中使用�
 
 ![转换流程](http://upload-images.jianshu.io/upload_images/4482847-1941fd6b845db3b5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-主要难点在于各类地址的理解。尤其注意，在页目录项、页表项中存储的是页表项的**物理地址**前 20bit 外加 12bit 的 flag。
-```
+主要难点在于各类地址的理解。尤其注意，在页目录项、页表项中存储的是页表项的 **物理地址** 前 20bit 外加 12bit 的 flag。
+```c
 pte_t *
 pgdir_walk(pde_t *pgdir, const void *va, int create)
 {
@@ -420,7 +420,7 @@ pgdir_walk(pde_t *pgdir, const void *va, int create)
 **page_lookup 函数**
 
 根据各个函数的依赖关系，下一个编写 page_lookup 函数。作用是查找虚拟地址对应的物理页描述。
-```
+```c
 struct PageInfo *
 page_lookup(pde_t *pgdir, void *va, pte_t **pte_store)
 {
@@ -443,7 +443,7 @@ page_lookup(pde_t *pgdir, void *va, pte_t **pte_store)
 **page_remove 函数**
 
 作用是移除一个虚拟地址与对应的物理页的映射。
-```
+```c
 void
 page_remove(pde_t *pgdir, void *va)
 {
@@ -462,7 +462,7 @@ page_remove(pde_t *pgdir, void *va)
 **page_insert 函数**
 
 作用是建立一个虚拟地址与物理页的映射，与 page_remove 对应。
-```
+```c
 int
 page_insert(pde_t *pgdir, struct PageInfo *pp, void *va, int perm)
 {
@@ -497,7 +497,7 @@ page_insert(pde_t *pgdir, struct PageInfo *pp, void *va, int perm)
 > 当该物理页 ref = 1，经过 page_remove 后会被加入空闲页链表。然而，在函数最后还需要增加其引用计数，导致 page_free_list 中出现了非空闲页。
 
 课程中希望尽量不要做特例处理，即避免使用if，于是可以这么改进：
-```
+```c
 int 
 page_insert(pde_t *pgdir, struct PageInfo *pp, void *va, int perm)
 {
@@ -517,7 +517,7 @@ page_insert(pde_t *pgdir, struct PageInfo *pp, void *va, int perm)
 **boot_map_region 函数**
 
 作用是映射一片指定虚拟页到指定物理页。思路就是反复利用pgdir_walk。难度不高，注意此时的 va 类型是 uintptr_t，调用 pgdir_walk 时需要转换为 void \*。
-```
+```c
 static void
 boot_map_region(pde_t *pgdir, uintptr_t va, size_t size, physaddr_t pa, int perm)
 {
@@ -539,7 +539,7 @@ boot_map_region(pde_t *pgdir, uintptr_t va, size_t size, physaddr_t pa, int perm
 - **Fill in the missing code in mem_init() after the call to check_page().**
 
 JOS 将处理器的 32 位线性地址分为用户环境（低位地址）以及内核环境（高位地址）。分界线在 inc/memlayout.h 中定义为 ULIM：
-```
+```c
 #define	KERNBASE	0xF0000000
 // Kernel stack.
 #define KSTACKTOP	KERNBASE
@@ -551,7 +551,7 @@ JOS 将处理器的 32 位线性地址分为用户环境（低位地址）以及
 其中 PTSIZE 被定义为一个页目录项映射的 Byte，一个页目录中有1024个页表项，每个页表项可映射一个物理页。故为 4MB。可算得 `ULIM = 0xf0000000 - 0x00400000 - 0x00400000 = 0xef800000`，可通过查看 inc/memlayout 确认。
 我们还需要给物理页表设置权限以确保用户只能访问用户环境的地址空间。否则，用户的代码可能会覆盖内核数据，造成严重后果。用户环境应该在高于 ULIM 的内存中没有任何权限，而内核则可以读写着部分内存。在 UTOP( 0xeec00000) 到 ULIM 的 12MB 区间中，存储了一些内核数据结构。内核以及用户环境对这部分地址都只具有 read-only 权限。低于 UTOP 的内存则由用户环境自由设置权限使用。
 个人感觉，exercise 4 中的 boot_map_region 放到这里更合适，因为在这里才会用到。而且，之前的这个写法，其实存在一个很大的问题，马上揭晓。不知道有没有大牛可以提前看出来。
-```
+```c
 static void
 boot_map_region(pde_t *pgdir, uintptr_t va, size_t size, physaddr_t pa, int perm)
 {
@@ -572,7 +572,7 @@ boot_map_region(pde_t *pgdir, uintptr_t va, size_t size, physaddr_t pa, int perm
  1. UPAGES (0xef000000 ~ 0xef400000) 最多4MB
  
 这是 JOS 记录物理页面使用情况的数据结构，即 exercise 1 中完成的东西，只有 kernel 能够访问。由于用户空间同样需要访问这个数据结构，我们将用户空间的一块内存映射到存储该数据结构的物理内存上。很自然联想到了 boot_map_region 这个函数。
-```
+```c
 //////////////////////////////////////////////////////////////////////
 	// Map 'pages' read-only by the user at linear address UPAGES
 	// Permissions:
@@ -587,7 +587,7 @@ boot_map_region(pde_t *pgdir, uintptr_t va, size_t size, physaddr_t pa, int perm
  2. 内核栈 ( 0xefff8000 ~ 0xf0000000) 32kB
  
 bootstack 表示的是栈地最低地址，由于栈向低地址生长，实际是栈顶。常数 KSTACKTOP = 0xf0000000，KSTKSIZE = 32kB。在此之下是一块未映射到物理内存的地址，所以如果栈溢出时，只会报错而不会覆盖数据。因此我们只用映射 [KSTACKTOP-KSTKSIZE, KSTACKTOP)  区间内的虚拟地址即可。
-```
+```c
 	//////////////////////////////////////////////////////////////////////
 	// Use the physical memory that 'bootstack' refers to as the kernel
 	// stack.  The kernel stack grows down from virtual address KSTACKTOP.
@@ -606,7 +606,7 @@ bootstack 表示的是栈地最低地址，由于栈向低地址生长，实际�
  3. 内核 ( 0xf0000000 ~ 0xffffffff ) 256MB
  
 之前在 lab1 中，通过 kernel/entrypgdir.c 映射了 4MB 的内存地址，这里需要映射全部 0xf0000000 至 0xffffffff 共 256MB 的内存地址。
-```
+```c
 	//////////////////////////////////////////////////////////////////////
 	// Map all of physical memory at KERNBASE.
 	// Ie.  the VA range [KERNBASE, 2^32) should map to
@@ -618,7 +618,7 @@ bootstack 表示的是栈地最低地址，由于栈向低地址生长，实际�
 	boot_map_region(kern_pgdir, (uintptr_t) KERNBASE, ROUNDUP(0xffffffff - KERNBASE, PGSIZE), 0, PTE_W | PTE_P);
 ```
 运行到这里，出现了一个不易察觉到问题。注意到，这里的 size 参数做了roundup，也就是说从 0x0fffffff 变为了 0x10000000。在 boot_map_region 中，再利用 va + size，显然会溢出得0。于是就会出现如下现象：
-```
+```c
 ...
 va = 0xef035000
 va = 0xef036000
@@ -646,7 +646,7 @@ kernel panic at kern/pmap.c:696: assertion failed: check_va2pa(pgdir, KERNBASE +
 ```
 即 boot_map_region 中的 for 循环一开始就判断 va > end_addr。这是显然的，因为 `end_addr = 0xf0000000 + 0x1000000 = 0x00000000`。
 因此，实际上 boot_map_region 的更佳实现是直接用页数，避免溢出。更改如下：
-```
+```c
 static void
 boot_map_region(pde_t *pgdir, uintptr_t va, size_t size, physaddr_t pa, int perm)
 {
@@ -704,7 +704,7 @@ check_page_installed_pgdir() succeeded!
 "overhead"在这里指的是开支。当我们达到最高物理内存时，显然1 个 page_dir 和 1024 个 page_table 都在工作，page_dir 和 page_table 每个 entry 都是 4 byte，且都有1024个 entry。所以一共 (1024 + 1) * 4kB = 4100 kB，还要加上 pages 数组所占用的 4MB，一共 8196 kB。如果要削减这个开支，可以使每个页的容量变大，例如变为 8kB 。
 
 - **Revisit the page table setup in kern/entry.S and kern/entrypgdir.c. Immediately after we turn on paging, EIP is still a low number (a little over 1MB). At what point do we transition to running at an EIP above KERNBASE? What makes it possible for us to continue executing at a low EIP between when we enable paging and when we begin running at an EIP above KERNBASE? Why is this transition necessary?**
-```
+```asm
 	# Now paging is enabled, but we're still running at a low EIP
 	# (why is this okay?).  Jump up above KERNBASE before entering
 	# C code.
@@ -733,7 +733,7 @@ relocated:
 - **Display in a useful and easy-to-read format all of the physical page mappings (or lack thereof) that apply to a particular range of virtual/linear addresses in the currently active address space. For example, you might enter 'showmappings 0x3000 0x5000' to display the physical page mappings and corresponding permission bits that apply to the pages at virtual addresses 0x3000, 0x4000, and 0x5000.**
 
 在 monitor 中添加命令的方法可参考 lab1 中的 backtrace 。此处还需要在 kern/monitor.h 中定义一下该函数。
-```
+```c
 int
 mon_showmappings(int argc, char **argv, struct Trapframe *tf)
 {
