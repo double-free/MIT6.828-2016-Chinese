@@ -1,0 +1,341 @@
++ ld obj/kern/kernel
++ mk obj/kern/kernel.img
+6828 decimal is 15254 octal!
+Physical memory: 131072K available, base = 640K, extended = 130432K
+check_page_free_list() succeeded!
+check_page_alloc() succeeded!
+map region size = 8192, 2 pages
+map region size = 4096, 1 pages
+check_page() succeeded!
+map region size = 262144, 64 pages
+map region size = 126976, 31 pages
+map region size = 268435456, 65536 pages
+map region size = 32768, 8 pages
+cpu 0: map 0xefff8000 to physical address 0x231000
+map region size = 32768, 8 pages
+cpu 1: map 0xeffe8000 to physical address 0x239000
+map region size = 32768, 8 pages
+cpu 2: map 0xeffd8000 to physical address 0x241000
+map region size = 32768, 8 pages
+cpu 3: map 0xeffc8000 to physical address 0x249000
+map region size = 32768, 8 pages
+cpu 4: map 0xeffb8000 to physical address 0x251000
+map region size = 32768, 8 pages
+cpu 5: map 0xeffa8000 to physical address 0x259000
+map region size = 32768, 8 pages
+cpu 6: map 0xeff98000 to physical address 0x261000
+map region size = 32768, 8 pages
+cpu 7: map 0xeff88000 to physical address 0x269000
+check_kern_pgdir() succeeded!
+check_page_free_list() succeeded!
+check_page_installed_pgdir() succeeded!
+SMP: CPU 0 found 4 CPU(s)
+map region size = 4096, 1 pages
+enabled interrupts: 1 2
+SMP: CPU 1 starting
+map region size = 4096, 1 pages
+SMP: CPU 2 starting
+map region size = 4096, 1 pages
+SMP: CPU 3 starting
+map region size = 4096, 1 pages
+[00000000] new env 00001000
+insert page at 00200000
+insert page at 00201000
+insert page at 00202000
+insert page at 00203000
+insert page at 00204000
+insert page at 00205000
+insert page at 00800000
+insert page at 00801000
+insert page at 00802000
+insert page at eebfd000
+[00001000] new env 00001001
+CPU 0: 2 [00001001] new env 00001002
+CPU 1: 3 [00001002] new env 00001003
+CPU 1: 5 [00001003] new env 00001004
+CPU 0: 7 [00001004] new env 00001005
+CPU 3: 11 [00001005] new env 00001006
+CPU 3: 13 [00001006] new env 00001007
+CPU 2: 17 [00001007] new env 00001008
+CPU 2: 19 [00001008] new env 00001009
+CPU 2: 23 [00001009] new env 0000100a
+CPU 3: 29 [0000100a] new env 0000100b
+CPU 1: 31 [0000100b] new env 0000100c
+CPU 2: 37 [0000100c] new env 0000100d
+CPU 3: 41 [0000100d] new env 0000100e
+CPU 0: 43 [0000100e] new env 0000100f
+CPU 1: 47 [0000100f] new env 00001010
+CPU 2: 53 [00001010] new env 00001011
+CPU 3: 59 [00001011] new env 00001012
+CPU 0: 61 [00001012] new env 00001013
+CPU 0: 67 [00001013] new env 00001014
+CPU 0: 71 [00001014] new env 00001015
+CPU 3: 73 [00001015] new env 00001016
+CPU 3: 79 [00001016] new env 00001017
+CPU 3: 83 [00001017] new env 00001018
+CPU 0: 89 [00001018] new env 00001019
+CPU 2: 97 [00001019] new env 0000101a
+CPU 3: 101 [0000101a] new env 0000101b
+CPU 2: 103 [0000101b] new env 0000101c
+CPU 3: 107 [0000101c] new env 0000101d
+CPU 3: 109 [0000101d] new env 0000101e
+CPU 3: 113 [0000101e] new env 0000101f
+CPU 0: 127 [0000101f] new env 00001020
+CPU 3: 131 [00001020] new env 00001021
+CPU 2: 137 [00001021] new env 00001022
+CPU 2: 139 [00001022] new env 00001023
+CPU 3: 149 [00001023] new env 00001024
+CPU 1: 151 [00001024] new env 00001025
+CPU 0: 157 [00001025] new env 00001026
+CPU 1: 163 [00001026] new env 00001027
+CPU 1: 167 [00001027] new env 00001028
+CPU 2: 173 [00001028] new env 00001029
+CPU 1: 179 [00001029] new env 0000102a
+CPU 2: 181 [0000102a] new env 0000102b
+CPU 3: 191 [0000102b] new env 0000102c
+CPU 2: 193 [0000102c] new env 0000102d
+CPU 0: 197 [0000102d] new env 0000102e
+CPU 3: 199 [0000102e] new env 0000102f
+CPU 3: 211 [0000102f] new env 00001030
+CPU 2: 223 [00001030] new env 00001031
+CPU 2: 227 [00001031] new env 00001032
+CPU 1: 229 [00001032] new env 00001033
+CPU 2: 233 [00001033] new env 00001034
+CPU 2: 239 [00001034] new env 00001035
+CPU 1: 241 [00001035] new env 00001036
+CPU 1: 251 [00001036] new env 00001037
+CPU 0: 257 [00001037] new env 00001038
+CPU 3: 263 [00001038] new env 00001039
+CPU 3: 269 [00001039] new env 0000103a
+CPU 2: 271 [0000103a] new env 0000103b
+CPU 1: 277 [0000103b] new env 0000103c
+CPU 0: 281 [0000103c] new env 0000103d
+CPU 2: 283 [0000103d] new env 0000103e
+CPU 2: 293 [0000103e] new env 0000103f
+CPU 3: 307 [0000103f] new env 00001040
+CPU 1: 311 [00001040] new env 00001041
+CPU 1: 313 [00001041] new env 00001042
+CPU 0: 317 [00001042] new env 00001043
+CPU 1: 331 [00001043] new env 00001044
+CPU 3: 337 [00001044] new env 00001045
+CPU 1: 347 [00001045] new env 00001046
+CPU 3: 349 [00001046] new env 00001047
+CPU 3: 353 [00001047] new env 00001048
+CPU 3: 359 [00001048] new env 00001049
+CPU 2: 367 [00001049] new env 0000104a
+CPU 0: 373 [0000104a] new env 0000104b
+CPU 1: 379 [0000104b] new env 0000104c
+CPU 0: 383 [0000104c] new env 0000104d
+CPU 2: 389 [0000104d] new env 0000104e
+CPU 0: 397 [0000104e] new env 0000104f
+CPU 2: 401 [0000104f] new env 00001050
+CPU 0: 409 [00001050] new env 00001051
+CPU 3: 419 [00001051] new env 00001052
+CPU 3: 421 [00001052] new env 00001053
+CPU 1: 431 [00001053] new env 00001054
+CPU 3: 433 [00001054] new env 00001055
+CPU 0: 439 [00001055] new env 00001056
+CPU 0: 443 [00001056] new env 00001057
+CPU 3: 449 [00001057] new env 00001058
+CPU 2: 457 [00001058] new env 00001059
+CPU 3: 461 [00001059] new env 0000105a
+CPU 2: 463 [0000105a] new env 0000105b
+CPU 0: 467 [0000105b] new env 0000105c
+CPU 3: 479 [0000105c] new env 0000105d
+CPU 3: 487 [0000105d] new env 0000105e
+CPU 2: 491 [0000105e] new env 0000105f
+CPU 2: 499 [0000105f] new env 00001060
+CPU 2: 503 [00001060] new env 00001061
+CPU 2: 509 [00001061] new env 00001062
+CPU 2: 521 [00001062] new env 00001063
+CPU 0: 523 [00001063] new env 00001064
+CPU 3: 541 [00001064] new env 00001065
+CPU 3: 547 [00001065] new env 00001066
+CPU 2: 557 [00001066] new env 00001067
+CPU 0: 563 [00001067] new env 00001068
+CPU 3: 569 [00001068] new env 00001069
+CPU 3: 571 [00001069] new env 0000106a
+CPU 0: 577 [0000106a] new env 0000106b
+CPU 0: 587 [0000106b] new env 0000106c
+CPU 2: 593 [0000106c] new env 0000106d
+CPU 3: 599 [0000106d] new env 0000106e
+CPU 1: 601 [0000106e] new env 0000106f
+CPU 0: 607 [0000106f] new env 00001070
+CPU 0: 613 [00001070] new env 00001071
+CPU 2: 617 [00001071] new env 00001072
+CPU 1: 619 [00001072] new env 00001073
+CPU 3: 631 [00001073] new env 00001074
+CPU 2: 641 [00001074] new env 00001075
+CPU 3: 643 [00001075] new env 00001076
+CPU 2: 647 [00001076] new env 00001077
+CPU 2: 653 [00001077] new env 00001078
+CPU 3: 659 [00001078] new env 00001079
+CPU 2: 661 [00001079] new env 0000107a
+CPU 3: 673 [0000107a] new env 0000107b
+CPU 0: 677 [0000107b] new env 0000107c
+CPU 3: 683 [0000107c] new env 0000107d
+CPU 2: 691 [0000107d] new env 0000107e
+CPU 1: 701 [0000107e] new env 0000107f
+CPU 0: 709 [0000107f] new env 00001080
+CPU 3: 719 [00001080] new env 00001081
+CPU 3: 727 [00001081] new env 00001082
+CPU 0: 733 [00001082] new env 00001083
+CPU 0: 739 [00001083] new env 00001084
+CPU 3: 743 [00001084] new env 00001085
+CPU 1: 751 [00001085] new env 00001086
+CPU 1: 757 [00001086] new env 00001087
+CPU 2: 761 [00001087] new env 00001088
+CPU 1: 769 [00001088] new env 00001089
+CPU 3: 773 [00001089] new env 0000108a
+CPU 2: 787 [0000108a] new env 0000108b
+CPU 1: 797 [0000108b] new env 0000108c
+CPU 3: 809 [0000108c] new env 0000108d
+CPU 0: 811 [0000108d] new env 0000108e
+CPU 1: 821 [0000108e] new env 0000108f
+CPU 2: 823 [0000108f] new env 00001090
+CPU 3: 827 [00001090] new env 00001091
+CPU 1: 829 [00001091] new env 00001092
+CPU 3: 839 [00001092] new env 00001093
+CPU 0: 853 [00001093] new env 00001094
+CPU 1: 857 [00001094] new env 00001095
+CPU 1: 859 [00001095] new env 00001096
+CPU 2: 863 [00001096] new env 00001097
+CPU 0: 877 [00001097] new env 00001098
+CPU 3: 881 [00001098] new env 00001099
+CPU 0: 883 [00001099] new env 0000109a
+CPU 2: 887 [0000109a] new env 0000109b
+CPU 0: 907 [0000109b] new env 0000109c
+CPU 2: 911 [0000109c] new env 0000109d
+CPU 2: 919 [0000109d] new env 0000109e
+CPU 3: 929 [0000109e] new env 0000109f
+CPU 1: 937 [0000109f] new env 000010a0
+CPU 3: 941 [000010a0] new env 000010a1
+CPU 2: 947 [000010a1] new env 000010a2
+CPU 1: 953 [000010a2] new env 000010a3
+CPU 0: 967 [000010a3] new env 000010a4
+CPU 1: 971 [000010a4] new env 000010a5
+CPU 3: 977 [000010a5] new env 000010a6
+CPU 3: 983 [000010a6] new env 000010a7
+CPU 1: 991 [000010a7] new env 000010a8
+CPU 3: 997 [000010a8] new env 000010a9
+CPU 2: 1009 [000010a9] new env 000010aa
+CPU 2: 1013 [000010aa] new env 000010ab
+CPU 1: 1019 [000010ab] new env 000010ac
+CPU 2: 1021 [000010ac] new env 000010ad
+CPU 2: 1031 [000010ad] new env 000010ae
+CPU 3: 1033 [000010ae] new env 000010af
+CPU 2: 1039 [000010af] new env 000010b0
+CPU 0: 1049 [000010b0] new env 000010b1
+CPU 3: 1051 [000010b1] new env 000010b2
+CPU 1: 1061 [000010b2] new env 000010b3
+CPU 1: 1063 [000010b3] new env 000010b4
+CPU 0: 1069 [000010b4] new env 000010b5
+CPU 1: 1087 [000010b5] new env 000010b6
+CPU 2: 1091 [000010b6] new env 000010b7
+CPU 2: 1093 [000010b7] new env 000010b8
+CPU 1: 1097 [000010b8] new env 000010b9
+CPU 1: 1103 [000010b9] new env 000010ba
+CPU 2: 1109 [000010ba] new env 000010bb
+CPU 3: 1117 [000010bb] new env 000010bc
+CPU 0: 1123 [000010bc] new env 000010bd
+CPU 2: 1129 [000010bd] new env 000010be
+CPU 2: 1151 [000010be] new env 000010bf
+CPU 1: 1153 [000010bf] new env 000010c0
+CPU 3: 1163 [000010c0] new env 000010c1
+CPU 2: 1171 [000010c1] new env 000010c2
+CPU 1: 1181 [000010c2] new env 000010c3
+CPU 2: 1187 [000010c3] new env 000010c4
+CPU 2: 1193 [000010c4] new env 000010c5
+CPU 3: 1201 [000010c5] new env 000010c6
+CPU 1: 1213 [000010c6] new env 000010c7
+CPU 3: 1217 [000010c7] new env 000010c8
+CPU 2: 1223 [000010c8] new env 000010c9
+CPU 1: 1229 [000010c9] new env 000010ca
+CPU 2: 1231 [000010ca] new env 000010cb
+CPU 3: 1237 [000010cb] new env 000010cc
+CPU 3: 1249 [000010cc] new env 000010cd
+CPU 3: 1259 [000010cd] new env 000010ce
+CPU 2: 1277 [000010ce] new env 000010cf
+CPU 3: 1279 [000010cf] new env 000010d0
+CPU 2: 1283 [000010d0] new env 000010d1
+CPU 1: 1289 [000010d1] new env 000010d2
+CPU 3: 1291 [000010d2] new env 000010d3
+CPU 2: 1297 [000010d3] new env 000010d4
+CPU 0: 1301 [000010d4] new env 000010d5
+CPU 1: 1303 [000010d5] new env 000010d6
+CPU 1: 1307 [000010d6] new env 000010d7
+CPU 2: 1319 [000010d7] new env 000010d8
+CPU 2: 1321 [000010d8] new env 000010d9
+CPU 2: 1327 [000010d9] new env 000010da
+CPU 3: 1361 [000010da] new env 000010db
+CPU 0: 1367 [000010db] new env 000010dc
+CPU 1: 1373 [000010dc] new env 000010dd
+CPU 3: 1381 [000010dd] new env 000010de
+CPU 3: 1399 [000010de] new env 000010df
+CPU 3: 1409 [000010df] new env 000010e0
+CPU 0: 1423 [000010e0] new env 000010e1
+CPU 1: 1427 [000010e1] new env 000010e2
+CPU 2: 1429 [000010e2] new env 000010e3
+CPU 0: 1433 [000010e3] new env 000010e4
+CPU 3: 1439 [000010e4] new env 000010e5
+CPU 3: 1447 [000010e5] new env 000010e6
+CPU 2: 1451 [000010e6] new env 000010e7
+CPU 3: 1453 [000010e7] new env 000010e8
+CPU 2: 1459 [000010e8] new env 000010e9
+CPU 0: 1471 [000010e9] new env 000010ea
+CPU 1: 1481 [000010ea] new env 000010eb
+CPU 2: 1483 [000010eb] new env 000010ec
+CPU 2: 1487 [000010ec] new env 000010ed
+CPU 1: 1489 [000010ed] new env 000010ee
+CPU 3: 1493 [000010ee] new env 000010ef
+CPU 2: 1499 [000010ef] new env 000010f0
+CPU 1: 1511 [000010f0] new env 000010f1
+CPU 0: 1523 [000010f1] new env 000010f2
+CPU 0: 1531 [000010f2] new env 000010f3
+CPU 0: 1543 [000010f3] new env 000010f4
+CPU 3: 1549 [000010f4] new env 000010f5
+CPU 3: 1553 [000010f5] new env 000010f6
+CPU 0: 1559 [000010f6] new env 000010f7
+CPU 1: 1567 [000010f7] new env 000010f8
+CPU 3: 1571 [000010f8] new env 000010f9
+CPU 3: 1579 [000010f9] new env 000010fa
+CPU 3: 1583 [000010fa] new env 000010fb
+CPU 1: 1597 [000010fb] new env 000010fc
+CPU 1: 1601 [000010fc] new env 000010fd
+CPU 3: 1607 [000010fd] new env 000010fe
+CPU 1: 1609 [000010fe] new env 000010ff
+CPU 3: 1613 [000010ff] new env 00001100
+CPU 0: 1619 [00001100] new env 00001101
+CPU 0: 1621 [00001101] new env 00001102
+CPU 3: 1627 [00001102] new env 00001103
+CPU 0: 1637 [00001103] new env 00001104
+CPU 1: 1657 [00001104] new env 00001105
+CPU 0: 1663 [00001105] new env 00001106
+CPU 3: 1667 [00001106] new env 00001107
+CPU 0: 1669 [00001107] new env 00001108
+CPU 0: 1693 [00001108] new env 00001109
+CPU 2: 1697 [00001109] new env 0000110a
+CPU 3: 1699 [0000110a] new env 0000110b
+CPU 1: 1709 [0000110b] new env 0000110c
+CPU 1: 1721 [0000110c] new env 0000110d
+CPU 3: 1723 [0000110d] new env 0000110e
+CPU 2: 1733 [0000110e] new env 0000110f
+CPU 3: 1741 [0000110f] new env 00001110
+CPU 3: 1747 [00001110] new env 00001111
+CPU 1: 1753 [00001111] new env 00001112
+CPU 0: 1759 [00001112] new env 00001113
+CPU 1: 1777 [00001113] new env 00001114
+CPU 0: 1783 [00001114] new env 00001115
+CPU 0: 1787 [00001115] new env 00001116
+CPU 1: 1789 [00001116] new env 00001117
+CPU 1: 1801 [00001117] new env 00001118
+CPU 3: 1811 [00001118] new env 00001119
+CPU 2: 1823 [00001119] new env 0000111a
+CPU 2: 1831 [0000111a] new env 0000111b
+CPU 3: 1847 [0000111b] new env 0000111c
+CPU 0: 1861 [0000111c] new env 0000111d
+CPU 1: 1867 [0000111d] new env 0000111e
+CPU 2: 1871 [0000111e] new env 0000111f
+CPU 2: 1873 [0000111f] new env 00001120
+CPU 2: 1877 [00001120] new env 00001121
+qemu: terminating on signal 15 from pid 26002
