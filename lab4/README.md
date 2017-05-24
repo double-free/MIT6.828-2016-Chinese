@@ -8,4 +8,4 @@
 
 在 part C中，我们会添加对进程间通信 ( IPC ) 的支持，允许不同的用户进程相互通信和同步。还要增加对硬件时钟中断和抢占的支持。
 
-由于本次 lab 内容较多，报告将分为 [part A](https://github.com/double-free/MIT6.828-2016-Chinese/blob/master/lab4/part_A.md), [part B](https://github.com/double-free/MIT6.828-2016-Chinese/blob/master/lab4/part_B.md), part C 三个部分。
+由于本次 lab 内容较多，报告将分为 [part A](https://github.com/double-free/MIT6.828-2016-Chinese/blob/master/lab4/part_A.md), [part B](https://github.com/double-free/MIT6.828-2016-Chinese/blob/master/lab4/part_B.md), [part C](https://github.com/double-free/MIT6.828-2016-Chinese/blob/master/lab4/part_C.md) 三个部分。
