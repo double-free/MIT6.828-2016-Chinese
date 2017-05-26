@@ -8,14 +8,14 @@ lab3 将主要实现能运行被保护的用户模式环境（protected user-mod
 Modify `mem_init()` in `kern/pmap.c` to allocate and map the envs array. This array consists of exactly `NENV` instances of the `Env` structure allocated much like how you allocated the pages array. Also like the pages array, the memory backing envs should also be mapped user read-only at UENVS (defined in `inc/memlayout.h`) so user processes can read from this array.
 
 首先，最大进程个数 NENV(1024) 以及进程描述符 struct Env 的定义可以在 inc/env.h 中找到。同时，我们在 kern/env.h 以及 kern/env.c 中可以找到三个全局变量的定义：
-```
+```c
 extern struct Env *envs;		// All environments
 extern struct Env *curenv;		// Current environment
 static struct Env *env_free_list;	// Free environment list
 ```
 我们需要将 envs 指针指向一个由 Env 结构体组成的数组，就像我们在 lab2 中对 pages 指针做的一样。同时，JOS 还需要将不活动的 Env 记录在 env_free_list 之中，类似于 page_free_list。curenv 指针记录着现在执行的进程。在第一个进程运行之前，为NULL。
 在 kern/pmap.c 中添加以下两行代码，基本就是仿造之前对 pages 的处理。
-```
+```c
 	// 分配空间并初始化
 	//////////////////////////////////////////////////////////////////////
 	// Make 'envs' point to an array of size 'NENV' of 'struct Env'.
@@ -55,7 +55,7 @@ Start a given environment running in user mode.
 **env_init()**
 
 作用是初始化 envs 这个数组以及 env_free_list。需要注意的主要是链表的顺序，要求第一个被使用是 envs[0]，所以我们从后往前插入（类似于栈，后进先出）。
-```
+```c
 void
 env_init(void)
 {
@@ -78,7 +78,7 @@ env_init(void)
  1. 进程的页目录与内核的页目录基本相同，仅需修改一下 UVPT，所以可以直接 memcpy。
  2. 需要增加页引用。
 
-```
+```c
 static int
 env_setup_vm(struct Env *e)
 {
@@ -119,7 +119,7 @@ env_setup_vm(struct Env *e)
 **region_alloc()**
 
 为进程分配内存并完成映射。重点就是想到要利用 lab2 中的 page_alloc() 完成分配内存页， page_insert() 完成虚拟地址到物理页的映射。
-```
+```c
 static void
 region_alloc(struct Env *e, void *va, size_t len)
 {
@@ -163,7 +163,7 @@ lcr3([页目录物理地址]) 将地址加载到 cr3 寄存器。
 2. 怎么更改函数入口？
 将 env->env_tf.tf_eip 设置为 elf->e_entry，等待之后的 env_pop_tf() 调用。
 
-```
+```c
 static void
 load_icode(struct Env *e, uint8_t *binary)
 {
@@ -198,7 +198,7 @@ load_icode(struct Env *e, uint8_t *binary)
 **env_create()**
 
 作用是新建一个进程。调用已经写好的 env_alloc() 函数即可，之后更改类型并且利用 load_icode() 读取 ELF。
-```
+```c
 void
 env_create(uint8_t *binary, enum EnvType type)
 {
@@ -215,7 +215,7 @@ env_create(uint8_t *binary, enum EnvType type)
 **env_run()**
 
 启动某个进程。注释已经非常详细地说明了怎么做，主要说下 env_pop_tf() 这个函数。该函数的作用是将 struct Trapframe 中存储的寄存器状态 pop 到相应寄存器中。查看之前写的 load_icode() 函数中的 `e->env_tf.tf_eip = elf->e_entry` 这一句，经过 env_pop_tf() 之后，指令寄存器的值即设置到了可执行文件的入口。
-```
+```c
 void
 env_run(struct Env *e)
 {
@@ -315,7 +315,7 @@ x86 的所有异常可以用中断向量 0\~31 表示，对应 IDT 的第 0\~31 
 通过上文，已经了解到了建立 IDT 以及处理异常所需要的基本信息。头文件 `inc/trap.h` 和 `kern/trap.h` 包含了与中断和异常相关的定义，需要仔细阅读。其中 `kern/trap.h` 包含内核私有定义，而 `inc/trap.h` 包含对内核以及用户进程和库都有用的定义。
 每个异常和中断都应该在 `trapentry.S` 和 `trap_init()` 有自己的处理函数，并在 IDT 中将这些处理函数的地址初始化。每个处理函数都需要在栈上新建一个 `struct Trapframe`（见 `inc/trap.h`)，以其地址为参数调用 `trap()` 函数，然后进行异常处理。
 >**Exercise 4.** 
-Edit `trapentry.S` and `trap.c` and implement the features described above. The macros `TRAPHANDLER` and `TRAPHANDLER_NOEC` in `trapentry.S` should help you, as well as the T_* defines in `inc/trap.h`. You will need to add an entry point in `trapentry.S` (using those macros) for each trap defined in `inc/trap.h`, and you'll have to provide `_alltraps` which the TRAPHANDLER macros refer to. You will also need to modify `trap_init()` to initialize the `idt` to point to each of these entry points defined in `trapentry.S`; the `SETGATE` macro will be helpful here.
+Edit `trapentry.S` and `trap.c` and implement the features described above. The macros `TRAPHANDLER` and `TRAPHANDLER_NOEC` in `trapentry.S` should help you, as well as the T_\* defines in `inc/trap.h`. You will need to add an entry point in `trapentry.S` (using those macros) for each trap defined in `inc/trap.h`, and you'll have to provide `_alltraps` which the TRAPHANDLER macros refer to. You will also need to modify `trap_init()` to initialize the `idt` to point to each of these entry points defined in `trapentry.S`; the `SETGATE` macro will be helpful here.
 Your `_alltraps` should:
 1. push values to make the stack look like a struct Trapframe
 2. load `GD_KD` into `%ds` and `%es`
@@ -326,7 +326,7 @@ Your `_alltraps` should:
 Test your trap handling code using some of the test programs in the `user` directory that cause exceptions before making any system calls, such as `user/divzero`. You should be able to get `make grade` to succeed on the `divzero`, `softint`, and `badsegment` tests at this point.
 
 较难的一个练习，首先第一步是搞明白`TRAPHANDLER`这段汇编代码的意义：
-```
+```asm
 #define TRAPHANDLER(name, num)	
 	.globl name;		
 	.type name, @function;	
@@ -351,7 +351,7 @@ Test your trap handling code using some of the test programs in the `user` direc
 这一步做了什么？光看这里很难理解，提示说是构造一个 `Trapframe` 结构体来保存现场，但是这里怎么直接就 push 中断向量了？实际上，在上文已经指出， cpu 自身会先 push 一部分寄存器（见例子所述），而其他则由用户和操作系统决定。由于中断向量是操作系统定义的，所以从这部分开始就已经不属于 cpu 的工作范畴了。
  
 在 `trapentry.S` 中：
-```
+```asm
 TRAPHANDLER_NOEC(handler0, T_DIVIDE)
 TRAPHANDLER_NOEC(handler1, T_DEBUG)
 TRAPHANDLER_NOEC(handler2, T_NMI)
@@ -376,7 +376,7 @@ TRAPHANDLER_NOEC(handler19, T_SIMDERR)
 TRAPHANDLER_NOEC(handler48, T_SYSCALL)
 ```
 该部分主要作用是声明函数。该函数是全局的，但是在 C 文件中使用的时候需要使用 `void name();` 再声明一下。
-```
+```asm
 _alltraps:
 pushl %ds
 pushl %es
@@ -391,7 +391,7 @@ call trap
 这部分较有难度，首先要搞明白，栈是从高地址向低地址生长，而结构体在内存中的存储是从低地址到高地址。而 cpu 以及`TRAPHANDLER`宏已经将压栈工作进行到了中断向量部分，若要形成一个 `Trapframe`，则还应该依次压入 `ds`, `es`以及 `struct PushRegs`中的各寄存器（倒序，可使用 `pusha`指令）。此后还需要更改数据段为内核的数据段。**注意，不能用立即数直接给段寄存器赋值。**因此不能直接写`movw $GD_KD, %ds`。
 
 在`kern/trap.c` 中：
-```
+```c
 void
 trap_init(void)
 {
@@ -453,7 +453,7 @@ trap_init(void)
 这个问题其实已经在 trapentry.S 的注释里回答了。注意该函数已经是全局的了，不需要再添加 extern 画蛇添足。
 2. SETGATE 如何使用？
 参见 `inc/mmu.h` 中的函数定义。
-```
+```c
 #define SETGATE(gate, istrap, sel, off, dpl)			
 {								
 	(gate).gd_off_15_0 = (uint32_t) (off) & 0xffff;		
@@ -487,7 +487,7 @@ What is the purpose of having an individual handler function for each exception/
 Did you have to do anything to make the `user/softint` program behave correctly? The grade script expects it to produce a general protection fault (trap 13), but `softint`'s code says int $14. Why should this produce interrupt vector 13? What happens if the kernel actually allows `softint`'s int $14 instruction to invoke the kernel's page fault handler (which is interrupt vector 14)?
 
 `user/softint.c`内容如下：
-```
+```c
 // buggy program - causes an illegal software interrupt
 
 #include <inc/lib.h>
@@ -499,7 +499,7 @@ umain(int argc, char **argv)
 }
 ```
 `grade-lab3`中对应的评分标准如下：
-```
+```python
 @test(10)
 def test_softint():
     r.user_test("softint")
@@ -521,7 +521,7 @@ def test_softint():
 Modify `trap_dispatch()` to dispatch page fault exceptions to `page_fault_handler()`. You should now be able to get make grade to succeed on the `faultread`, `faultreadkernel`, `faultwrite`, and `faultwritekernel` tests. If any of them don't work, figure out why and fix them. Remember that you can boot JOS into a particular user program using make run-x or make run-x-nox.
 
 较为简单，实际上就是在`trap_dispatch()`中根据 trap number 进行一个处理分配。目前只需要加入缺页异常即可完成该 exercise。
-```
+```c
 static void
 trap_dispatch(struct Trapframe *tf)
 {
@@ -550,7 +550,7 @@ trap_dispatch(struct Trapframe *tf)
 Modify `trap_dispatch()` to make breakpoint exceptions invoke the kernel monitor. You should now be able to get make grade to succeed on the `breakpoint` test.
 
 跟之前的练习实现方法是一样的。另外需要找到在 `kern/monitor.c` 中的 `void monitor(struct TrapFrame *tf)`函数。改写 trap_dispatch 函数，加入断点处理。
-```
+```c
 static void
 trap_dispatch(struct Trapframe *tf)
 {
@@ -576,11 +576,11 @@ trap_dispatch(struct Trapframe *tf)
 }
 ```
 第一次运行发现并没有通过检验，报的是通用保护异常。一看是权限问题。把 Exercise 4 中的
-```
+```c
 SETGATE(idt[T_BRKPT], 1, GD_KT, handler3, 0);
 ```
 改为：
-```
+```c
 SETGATE(idt[T_BRKPT], 1, GD_KT, handler3, 3);
 ```
 即可完成。
@@ -592,7 +592,7 @@ The break point test case will either generate a break point exception or a gene
 What do you think is the point of these mechanisms, particularly in light of what the user/softint test program does?
 
 在`inc/mmu.h` 中可以找到：
-```
+```c
 // Gate descriptors for interrupts and traps
 struct Gatedesc {
 	unsigned gd_off_15_0 : 16;   // low 16 bits of offset in segment
@@ -620,7 +620,7 @@ JOS 内核使用 `int` 指令来触发一个处理器中断。特别的，我们
 
 **inc/syscall.h**
 
-```
+```c
 #ifndef JOS_INC_SYSCALL_H
 #define JOS_INC_SYSCALL_H
 
@@ -638,7 +638,7 @@ enum {
 这个头文件主要定义了系统调用号，实际就是一个 enum 而已。
 
 **lib/syscall.c**
-```
+```c
 // System call stubs.
 
 #include <inc/syscall.h>
@@ -708,7 +708,7 @@ sys_getenvid(void)
 
 其语法固定为：
 `asm volatile (“asm code”：output：input：changed);`
-```
+```c
     asm volatile("int %1\n"
              : "=a" (ret)
              : "i" (T_SYSCALL),
@@ -745,11 +745,11 @@ sys_getenvid(void)
 **kern/trap.c**
 
 首先不要忘记在 trap_init 中设置好入口，并且权限设为3，使得用户进程能够产生这个中断。
-```
+```c
 	SETGATE(idt[T_SYSCALL], 0, GD_KT, handler48, 3);
 ```
 另外就是 trap_dispatch 函数中加入相应的处理方法：
-```
+```c
 		case T_SYSCALL:
 			tf->tf_regs.reg_eax = syscall(tf->tf_regs.reg_eax, 
 							tf->tf_regs.reg_edx,
@@ -764,7 +764,7 @@ sys_getenvid(void)
 **kern/syscall.c**
 
 我们在 `kern/trap.c` 中调用的实际上就是这里的 syscall 函数，而不是 `lib/syscall.c` 中的那个。想明白这一点，设置参数也就很简单了，注意返回值的处理。
-```
+```c
 int32_t
 syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, uint32_t a5)
 {
@@ -804,7 +804,7 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 #### 用户进程启动
 用户进程从 `lib/entry.S` 开始运行。经过一些设置，调用了 `lib/libmain.c` 下的 `libmain()` 函数。在 `libmain()` 中，我们需要把全局指针 `thisenv` 指向该程序在 `envs[]` 数组中的位置。
 `libmain()` 会调用 `umain`，即用户进程的main函数。在`user/hello.c`中，可以看到其内容为：
-```
+```c
 void
 umain(int argc, char **argv)
 {
@@ -818,12 +818,12 @@ Add the required code to the user library, then boot your kernel. You should see
 
 原以为是个很简单的练习，然而我代码写好了却无法运行成功。这个练习重在检查以前的代码，之前很多代码虽然通过了 `make grade`，却不一定正确。
 在 `lib/libmain.c` 中把 `thisenv = 0` 改为：
-```
+```c
 	thisenv = &envs[ENVX(sys_getenvid())];
 ```
 即可通过。记录我自己犯的错误如下：
 1. 在 `kern/syscall.c` 的函数 `syscall()` 中：
-```
+```c
     case SYS_getenvid:
         // retVal = sys_getenvid() >= 0; 错误，应该返回获取的id
         // 返回值不仅是用于判断执行成功与否，也可能携带信息
@@ -831,7 +831,7 @@ Add the required code to the user library, then boot your kernel. You should see
         break;
 ```
 2. 在 `kern/env.c` 的函数 `region_alloc` 中，我原先的写法为：
-```
+```c
 static void
 region_alloc(struct Env *e, void *va, size_t len)
 {
@@ -871,7 +871,7 @@ insert page at 00800000
 region allocation completed...
 ```
 可以看出，这里只插入了一页，然而实际上应该要插入两页才合适。因为页面对齐不是根据某个地址来做的，而是对整个内存的对齐，类似于 `0x00800020` 到 `0x00801014`这段内存，虽然长度不足一页，但实际上横跨了 `0x00800000~0x00801000` 以及 `0x00801000~0x00802000` ，而按照之前的写法，没有插入  `0x00801000~0x00802000` 这一段内存，必然会导致出错。分析出原因，改动就很容易了，将实现改为根据最初地址和最终地址来进行对齐即可。
-```
+```c
 static void
 region_alloc(struct Env *e, void *va, size_t len)
 {
@@ -917,7 +917,7 @@ Boot your kernel, running user/buggyhello. The environment should be destroyed, 
 >Finally, change `debuginfo_eip` in `kern/kdebug.c` to call `user_mem_check` on `usd`, `stabs`, and `stabstr`.
 
 在 `kern/trap.c` 中加入判断页错误来源。原理见 IDT 表部分的讲解。
-```
+```c
 void
 page_fault_handler(struct Trapframe *tf)
 {
@@ -943,7 +943,7 @@ page_fault_handler(struct Trapframe *tf)
 }
 ```
 在 `kern/pmap.c` 中修改检查用户内存的部分。需要注意的是由于需要存储第一个访问出错的地址，`va` 所在的页面需要单独处理一下，不能直接对齐。
-```
+```c
 int
 user_mem_check(struct Env *env, const void *va, size_t len, int perm)
 {
@@ -965,7 +965,7 @@ user_mem_check(struct Env *env, const void *va, size_t len, int perm)
 }
 ```
 在 `kern/syscall.c` 中的输出字符串部分加入内存检查。
-```
+```c
 static void
 sys_cputs(const char *s, size_t len)
 {
@@ -979,7 +979,7 @@ sys_cputs(const char *s, size_t len)
 }
 ```
 在 `kern/kdebug.c` 中的 `debuginfo_eip` 函数中加入内存检查。
-```
+```c
 		// Make sure this memory is valid.
 		// Return -1 if it is not.  Hint: Call user_mem_check.
 		// LAB 3: Your code here.
@@ -1000,7 +1000,7 @@ sys_cputs(const char *s, size_t len)
 If you now run `user/breakpoint`, you should be able to run `backtrace` from the kernel monitor and see the backtrace traverse into `lib/libmain.c` before the kernel panics with a page fault. What causes this page fault? You don't need to fix it, but you should understand why it happens.
 
 运行 `make run-breakpoint` 并`backtrace` 得到输出：
-```
+```c
 Stack backtrace:
 	     ebp efffff20  eip f0100a75  args 00000001 efffff38 f01b4000 00000000 f0172840
 	     	     kern/monitor.c:187: monitor+276
@@ -1072,7 +1072,7 @@ Stack backtrace:
 K> 
 ```
 没有再出现 page fault，猜想正确。造成该现象的原因是 `lib/entry.S` 
-```
+```asm
 // Entrypoint - this is where the kernel (or our parent environment)
 // starts us running when we are initially loaded into a new environment.
 .text
